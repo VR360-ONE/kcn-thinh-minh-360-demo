@@ -6,7 +6,7 @@
 #
 # Tạo file .env.deploy (đã gitignore) hoặc export biến:
 #   FTP_HOST=stg.vr360.one
-#   FTP_USER=ftp_stg_ws01
+#   FTP_USER=ftp_stg_ws02
 #   FTP_PASS=...
 #   FTP_PORT=21
 #   FTP_REMOTE_BASE=du-an
@@ -25,7 +25,7 @@ if [[ -f .env.deploy ]]; then
 fi
 
 : "${FTP_HOST:=stg.vr360.one}"
-: "${FTP_USER:=ftp_stg_ws01}"
+: "${FTP_USER:=ftp_stg_ws02}"
 : "${FTP_PORT:=21}"
 : "${FTP_REMOTE_BASE:=du-an}"
 : "${DEPLOY_SUBDIR:=kcn-thinh-minh-360-demo}"
@@ -56,6 +56,5 @@ trap 'rm -f "$LFTP_SCRIPT"' EXIT
 
 lftp -f "$LFTP_SCRIPT"
 
-echo "Xong. Thử mở (đổi ws-01/ws-02 theo tài khoản FTP):"
-echo "  https://stg.vr360.one/ws-01/${REMOTE_PATH}/"
+echo "Xong. Mặc định user ws-02 — URL:"
 echo "  https://stg.vr360.one/ws-02/${REMOTE_PATH}/"

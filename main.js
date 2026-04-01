@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { IMMERSIVE_HOTSPOTS_KCN_REAL } from "./kcn-real-hotspots.js";
 
 /**
  * Tỷ lệ minh họa: 1 đơn vị scene ≈ 10 m thực địa.
@@ -21,11 +22,33 @@ const AERIAL_PANO_URL = new URL(
   import.meta.url
 ).href;
 
-// Chế độ 3D 360: sân công nghiệp (mắt gần mặt đất) — CC0 Poly Haven "overcast_industrial_courtyard"
-const PANO_3D360_URL = new URL(
-  "./panoramas/overcast_industrial_courtyard_cc0.jpg",
-  import.meta.url
-).href;
+// Chế độ 3D 360: bộ ảnh equirectangular thực địa V1 (4 góc — TT01…TT04)
+const PANO_3D360_URLS = [
+  new URL("./panoramas/v1_pc01.jpg", import.meta.url).href,
+  new URL("./panoramas/v1_pc02.jpg", import.meta.url).href,
+  new URL("./panoramas/v1_pc03.jpg", import.meta.url).href,
+  new URL("./panoramas/v1_pc04.jpg", import.meta.url).href,
+];
+/** @type {number} */
+let activePano3d360Index = 0;
+
+function getPano3d360Url() {
+  return PANO_3D360_URLS[activePano3d360Index] ?? PANO_3D360_URLS[0];
+}
+
+// Ảnh phối toàn cảnh thực tế dự án KCN Thịnh Minh (Dạ Hợp) — PCTT + topview
+const PANO_KCN_REAL_URLS = [
+  new URL("./panoramas/kcn_real_fr00.jpg", import.meta.url).href,
+  new URL("./panoramas/kcn_real_fr01.jpg", import.meta.url).href,
+  new URL("./panoramas/kcn_real_fr04.jpg", import.meta.url).href,
+  new URL("./panoramas/kcn_real_fr05.jpg", import.meta.url).href,
+  new URL("./panoramas/kcn_real_topview.jpg", import.meta.url).href,
+];
+let activePanoKcnRealIndex = 0;
+
+function getPanoKcnRealUrl() {
+  return PANO_KCN_REAL_URLS[activePanoKcnRealIndex] ?? PANO_KCN_REAL_URLS[0];
+}
 
 /**
  * Hotspot chế độ flycam / tổng thể (hilltop).
@@ -66,37 +89,41 @@ const IMMERSIVE_HOTSPOTS_AERIAL = [
   },
 ];
 
-/** Hotspot chế độ 3D 360 (courtyard / nhà xưởng — overcast industrial) */
+/** Hotspot chế độ 3D 360 — mỗi điểm gắn một ảnh V1 (TT01…TT04); lon/lat có thể hiệu chỉnh theo từng pano */
 const IMMERSIVE_HOTSPOTS_3D360 = [
   {
-    id: "yard-main",
-    title: "Sân bê tông & luồng xe (minh họa)",
+    id: "v1-tt01",
+    panoIndex: 0,
+    title: "Thực địa V1 · TT 01",
     description:
-      "Góc mắt gần mặt đất trong khu công nghiệp. Sản phẩm thật: neo hotspot theo lối đi, cổng, nhà xưởng trên ảnh 360 thực địa.",
+      "Ảnh 360° từ bộ V1. Hotspot và vị trí trên cầu có thể tinh chỉnh theo từng file equirectangular.",
     lon: -25,
     lat: 2,
   },
   {
-    id: "warehouse-line",
-    title: "Dãy nhà xưởng",
+    id: "v1-tt02",
+    panoIndex: 1,
+    title: "Thực địa V1 · TT 02",
     description:
-      "Minh họa kho / xưởng sản xuất. Có thể liên kết mặt bằng phân lô, diện tích cho thuê.",
+      "Góc quay 360 thứ hai trong bộ V1. Dùng thanh TT 01–04 bên dưới để đổi ảnh bất cứ lúc nào.",
     lon: 55,
     lat: -8,
   },
   {
-    id: "gate-area",
-    title: "Khu cổng / kiểm soát",
+    id: "v1-tt03",
+    panoIndex: 2,
+    title: "Thực địa V1 · TT 03",
     description:
-      "Điểm nhấn an ninh, logistics. Thêm video flycam hoặc sơ đồ luồng vào ra.",
+      "Góc quay 360 thứ ba. Mỗi hotspot có thể mở nội dung riêng (video, PDF, form) khi triển khai production.",
     lon: 140,
     lat: -18,
   },
   {
-    id: "sky-weather",
-    title: "Trời trầm — ánh sáng đồng nhất",
+    id: "v1-tt04",
+    panoIndex: 3,
+    title: "Thực địa V1 · TT 04",
     description:
-      "Ảnh CC0 Poly Haven (overcast_industrial_courtyard). Không phải hiện trường KCN Thịnh Minh.",
+      "Góc quay 360 thứ tư trong bộ V1 — KCN Thịnh Minh (Dạ Hợp).",
     lon: -160,
     lat: 35,
   },
@@ -139,8 +166,8 @@ const markerMeshes = [];
 let panoScene, panoCamera, panoRenderer;
 let modalOpen = false;
 
-/** @type {"3d" | "pano360" | "pano3d360"} */
-let viewMode = "3d";
+/** @type {"pano3d360" | "panoKcnReal"} */
+let viewMode = "panoKcnReal";
 
 let sharedPanoTex = null;
 const panoTexWaiters = [];
@@ -151,18 +178,48 @@ const immersiveTexCache = new Map();
 const immersiveTexWaiters = new Map();
 
 let immersiveSphereMesh = null;
+/** Hai mặt phẳng KCN (2D) để crossfade khi đổi ảnh */
+let immersiveFlatMeshes = /** @type {[THREE.Mesh | null, THREE.Mesh | null]} */ ([
+  null,
+  null,
+]);
+let kcnFlatFrontIndex = 0;
+let kcnFlatTransitionGen = 0;
+let kcnFlatCrossfading = false;
+const KCN_FLAT_FADE_MS = 420;
 
-let immersiveScene, immersiveCamera, immersiveRenderer;
+function getKcnFlatFrontMesh() {
+  return immersiveFlatMeshes[kcnFlatFrontIndex];
+}
+
+let immersiveScene,
+  immersivePerspectiveCamera,
+  immersiveOrthoCamera,
+  immersiveRenderer;
 let immersiveReady = false;
+
+function isImmersiveKcnFlatMode() {
+  return viewMode === "panoKcnReal";
+}
+
+function getImmersiveActiveCamera() {
+  return isImmersiveKcnFlatMode() ? immersiveOrthoCamera : immersivePerspectiveCamera;
+}
 
 let modalPanoLon = 0;
 let modalPanoLat = 0;
+/** Góc đã nội suy — dùng cho camera (target: modalPanoLon / modalPanoLat) */
+let modalPanoLonView = 0;
+let modalPanoLatView = 0;
 let modalPanoDrag = false;
 let modalPanoPx = 0;
 let modalPanoPy = 0;
 
 let immersiveLon = 0;
 let immersiveLat = 0;
+/** Góc đã nội suy — dùng cho camera (target: immersiveLon / immersiveLat) */
+let immersiveLonView = 0;
+let immersiveLatView = 0;
 let immersivePx = 0;
 let immersivePy = 0;
 /** Đang giữ chuột trên canvas panorama toàn màn hình */
@@ -178,6 +235,34 @@ let immersiveHotspotSheetOpen = false;
 
 const DEFAULT_CAM_POS = new THREE.Vector3(175, 195, 205);
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
+
+/** Hệ số làm mượt xoay 360 (lambda exponential theo dt; càng lớn càng bám nhanh target) */
+const PANO_ANGLE_SMOOTH_LAMBDA = 26;
+
+let panoAngleSmoothLastT = 0;
+
+function stepPanoramaAngleSmoothing() {
+  const immersiveOn = isImmersivePanoramaMode() && immersiveRenderer;
+  const modalOn = modalOpen && panoRenderer;
+  if (!immersiveOn && !modalOn) {
+    panoAngleSmoothLastT = 0;
+    return;
+  }
+  const now = performance.now();
+  const dt = panoAngleSmoothLastT
+    ? Math.min((now - panoAngleSmoothLastT) / 1000, 0.09)
+    : 0.016;
+  panoAngleSmoothLastT = now;
+  const k = 1 - Math.exp(-PANO_ANGLE_SMOOTH_LAMBDA * dt);
+  if (immersiveOn && !isImmersiveKcnFlatMode()) {
+    immersiveLonView += (immersiveLon - immersiveLonView) * k;
+    immersiveLatView += (immersiveLat - immersiveLatView) * k;
+  }
+  if (modalOn) {
+    modalPanoLonView += (modalPanoLon - modalPanoLonView) * k;
+    modalPanoLatView += (modalPanoLat - modalPanoLatView) * k;
+  }
+}
 
 function loadSharedPanorama(onLoaded) {
   if (sharedPanoTex !== undefined && sharedPanoTex !== null) {
@@ -266,14 +351,14 @@ function addImmersiveHotspots(scene, hotspotList) {
   const group = new THREE.Group();
   group.name = "immersive-hotspots";
   const matCore = new THREE.MeshBasicMaterial({
-    color: 0xdcb248,
+    color: 0xe4c065,
     transparent: true,
     opacity: 0.95,
     depthTest: true,
     depthWrite: false,
   });
   const matRing = new THREE.MeshBasicMaterial({
-    color: 0xb58234,
+    color: 0xc9a227,
     transparent: true,
     opacity: 0.55,
     depthTest: true,
@@ -305,6 +390,222 @@ function addImmersiveHotspots(scene, hotspotList) {
   scene.add(group);
 }
 
+/** Hotspot trên ảnh 2D: u,v ∈ [0,1] (góc trên-trái = 0,0), mặt phẳng tại z = planeZ */
+function addFlatImmersiveHotspots(scene, hotspotList, planeW, planeH, planeZ = -1) {
+  const old = scene.getObjectByName("immersive-hotspots");
+  if (old) scene.remove(old);
+  immersiveHotspotMeshes.length = 0;
+
+  const group = new THREE.Group();
+  group.name = "immersive-hotspots";
+  const matCore = new THREE.MeshBasicMaterial({
+    color: 0xe4c065,
+    transparent: true,
+    opacity: 0.95,
+    depthTest: true,
+    depthWrite: false,
+  });
+  const matRing = new THREE.MeshBasicMaterial({
+    color: 0xc9a227,
+    transparent: true,
+    opacity: 0.55,
+    depthTest: true,
+    depthWrite: false,
+  });
+
+  const zOff = planeZ + 0.04;
+  const scale = Math.min(planeW, planeH) * 0.018;
+  const coreR = scale * 0.45;
+  const ringR = scale * 0.95;
+
+  for (const h of hotspotList) {
+    const u = typeof h.u === "number" ? h.u : 0.5;
+    const v = typeof h.v === "number" ? h.v : 0.5;
+    const x = (u - 0.5) * planeW;
+    const y = (0.5 - v) * planeH;
+    const pos = new THREE.Vector3(x, y, zOff);
+
+    const core = new THREE.Mesh(
+      new THREE.SphereGeometry(coreR, 16, 12),
+      matCore
+    );
+    core.position.copy(pos);
+    core.userData.hotspot = h;
+    group.add(core);
+    immersiveHotspotMeshes.push(core);
+
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(ringR, ringR * 0.08, 8, 28),
+      matRing
+    );
+    ring.position.copy(pos);
+    ring.userData.hotspot = h;
+    group.add(ring);
+    immersiveHotspotMeshes.push(ring);
+  }
+  scene.add(group);
+}
+
+function computeKcnFlatPlaneSize(tex) {
+  if (!tex?.image) {
+    return { pw: 2, ph: 2 };
+  }
+  const iw = tex.image.width || 1;
+  const ih = tex.image.height || 1;
+  const ai = iw / ih;
+  const w = window.innerWidth;
+  const h = Math.max(window.innerHeight, 1);
+  const av = w / h;
+  const Wv = 2 * av;
+  const Hv = 2;
+  const pw = Math.max(Wv, Hv * ai);
+  const ph = pw / ai;
+  return { pw, ph };
+}
+
+function applyKcnFlatPlaneGeometry(mesh, pw, ph) {
+  mesh.geometry.dispose();
+  mesh.geometry = new THREE.PlaneGeometry(pw, ph);
+  mesh.position.set(0, 0, -1);
+}
+
+function snapKcnFlatToFrontOnly() {
+  kcnFlatCrossfading = false;
+  const fm = getKcnFlatFrontMesh();
+  const bm = immersiveFlatMeshes[1 - kcnFlatFrontIndex];
+  if (!fm || !bm) return;
+  bm.visible = false;
+  bm.material.opacity = 0;
+  bm.material.map = null;
+  bm.material.transparent = true;
+  bm.material.depthWrite = true;
+  bm.material.needsUpdate = true;
+  bm.renderOrder = 0;
+  fm.visible = !!fm.material.map;
+  fm.material.opacity = 1;
+  fm.material.transparent = false;
+  fm.material.depthWrite = true;
+  fm.material.needsUpdate = true;
+  fm.renderOrder = 0;
+}
+
+function applyImmersiveKcnRealFlat(url) {
+  const m0 = immersiveFlatMeshes[0];
+  const m1 = immersiveFlatMeshes[1];
+  if (!m0 || !m1) return;
+
+  loadImmersivePanoramaUrl(url, (tex) => {
+    if (!immersiveFlatMeshes[0] || !immersiveFlatMeshes[1]) return;
+    if (getPanoKcnRealUrl() !== url) return;
+
+    kcnFlatTransitionGen += 1;
+    const myGen = kcnFlatTransitionGen;
+    snapKcnFlatToFrontOnly();
+
+    const front = immersiveFlatMeshes[kcnFlatFrontIndex];
+    const back = immersiveFlatMeshes[1 - kcnFlatFrontIndex];
+    const matF = front.material;
+    const matB = back.material;
+
+    const hlNow = () => pickImmersiveHotspotsForMode("panoKcnReal");
+
+    if (!tex?.image) {
+      matF.map = null;
+      matF.color.setHex(0x305c5a);
+      matF.needsUpdate = true;
+      front.visible = true;
+      addFlatImmersiveHotspots(immersiveScene, hlNow(), 2, 2, -1);
+      return;
+    }
+
+    const { pw, ph } = computeKcnFlatPlaneSize(tex);
+    applyKcnFlatPlaneGeometry(front, pw, ph);
+    applyKcnFlatPlaneGeometry(back, pw, ph);
+
+    const hadImage = !!(matF.map && matF.map.image);
+    if (hadImage && matF.map === tex) {
+      matF.map = tex;
+      matF.color.setHex(0xffffff);
+      matF.needsUpdate = true;
+      front.visible = true;
+      addFlatImmersiveHotspots(immersiveScene, hlNow(), pw, ph, front.position.z);
+      return;
+    }
+
+    if (!hadImage) {
+      matF.map = tex;
+      matF.color.setHex(0xffffff);
+      matF.transparent = false;
+      matF.opacity = 1;
+      matF.depthWrite = true;
+      matF.needsUpdate = true;
+      front.visible = true;
+      back.visible = false;
+      addFlatImmersiveHotspots(immersiveScene, hlNow(), pw, ph, front.position.z);
+      return;
+    }
+
+    matB.map = tex;
+    matB.color.setHex(0xffffff);
+    matB.transparent = true;
+    matB.opacity = 1;
+    matB.depthWrite = false;
+    matB.needsUpdate = true;
+    back.visible = true;
+    back.renderOrder = 0;
+
+    matF.transparent = true;
+    matF.opacity = 1;
+    matF.depthWrite = false;
+    matF.needsUpdate = true;
+    front.visible = true;
+    front.renderOrder = 1;
+
+    kcnFlatCrossfading = true;
+    const t0 = performance.now();
+
+    function step(now) {
+      if (myGen !== kcnFlatTransitionGen) return;
+      if (getPanoKcnRealUrl() !== url) return;
+      const t = Math.min(1, (now - t0) / KCN_FLAT_FADE_MS);
+      const eased = 1 - (1 - t) * (1 - t);
+      matF.opacity = 1 - eased;
+      if (t < 1) {
+        requestAnimationFrame(step);
+        return;
+      }
+
+      if (myGen !== kcnFlatTransitionGen) return;
+      if (getPanoKcnRealUrl() !== url) return;
+
+      kcnFlatCrossfading = false;
+      matF.map = null;
+      matF.opacity = 1;
+      matF.transparent = false;
+      matF.depthWrite = true;
+      matF.needsUpdate = true;
+      front.visible = false;
+      front.renderOrder = 0;
+
+      matB.depthWrite = true;
+      matB.transparent = false;
+      matB.needsUpdate = true;
+      back.renderOrder = 0;
+
+      kcnFlatFrontIndex = 1 - kcnFlatFrontIndex;
+      const newFront = getKcnFlatFrontMesh();
+      addFlatImmersiveHotspots(
+        immersiveScene,
+        hlNow(),
+        pw,
+        ph,
+        newFront.position.z
+      );
+    }
+    requestAnimationFrame(step);
+  });
+}
+
 function updatePanoCamera(cam, lon, lat) {
   const phi = THREE.MathUtils.degToRad(90 - lat);
   const theta = THREE.MathUtils.degToRad(lon);
@@ -318,15 +619,8 @@ function updatePanoCamera(cam, lon, lat) {
 }
 
 function resetView() {
-  if (viewMode === "3d") {
-    if (!mainCamera || !controls) return;
-    mainCamera.position.copy(DEFAULT_CAM_POS);
-    controls.target.copy(DEFAULT_TARGET);
-    controls.update();
-  } else {
-    immersiveLon = 0;
-    immersiveLat = 0;
-  }
+  immersiveLon = immersiveLat = 0;
+  immersiveLonView = immersiveLatView = 0;
 }
 
 function closeImmersiveHotspotSheet() {
@@ -342,6 +636,12 @@ function openImmersiveHotspotSheet(h) {
   const titleEl = document.getElementById("immersive-hotspot-title");
   const descEl = document.getElementById("immersive-hotspot-desc");
   if (!sheet || !titleEl || !descEl) return;
+  if (viewMode === "pano3d360" && typeof h.panoIndex === "number") {
+    setPano3d360Index(h.panoIndex);
+  }
+  if (viewMode === "panoKcnReal" && typeof h.panoIndex === "number") {
+    setPanoKcnRealIndex(h.panoIndex);
+  }
   titleEl.textContent = h.title;
   descEl.textContent = h.description;
   sheet.classList.add("open");
@@ -350,12 +650,13 @@ function openImmersiveHotspotSheet(h) {
 }
 
 function immersiveTryHotspotClick(clientX, clientY) {
-  if (!immersiveCamera || !immersiveRenderer || !raycaster) return;
+  if (!getImmersiveActiveCamera() || !immersiveRenderer || !raycaster) return;
   if (immersiveHotspotSheetOpen) return;
+  if (isImmersiveKcnFlatMode() && kcnFlatCrossfading) return;
   const rect = immersiveRenderer.domElement.getBoundingClientRect();
   pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, immersiveCamera);
+  raycaster.setFromCamera(pointer, getImmersiveActiveCamera());
   const hits = raycaster.intersectObjects(immersiveHotspotMeshes, true);
   if (hits.length === 0) return;
   let o = hits[0].object;
@@ -364,14 +665,90 @@ function immersiveTryHotspotClick(clientX, clientY) {
 }
 
 function isImmersivePanoramaMode() {
-  return viewMode === "pano360" || viewMode === "pano3d360";
+  return viewMode === "pano3d360" || viewMode === "panoKcnReal";
+}
+
+function syncPano3d360PickerUI() {
+  const bar = document.getElementById("pano3d360-picker");
+  if (!bar) return;
+  for (const btn of bar.querySelectorAll("[data-pano-idx]")) {
+    const i = Number(btn.getAttribute("data-pano-idx"));
+    btn.classList.toggle("pano3d360-picker__btn--active", i === activePano3d360Index);
+    btn.setAttribute("aria-pressed", i === activePano3d360Index ? "true" : "false");
+  }
+}
+
+function setPano3d360Index(idx) {
+  if (idx < 0 || idx >= PANO_3D360_URLS.length) return;
+  if (idx === activePano3d360Index) {
+    syncPano3d360PickerUI();
+    return;
+  }
+  activePano3d360Index = idx;
+  if (viewMode === "pano3d360") applyImmersivePanoContent("pano3d360");
+  syncPano3d360PickerUI();
+}
+
+function syncPanoKcnRealPickerUI() {
+  const bar = document.getElementById("pano-kcn-real-picker");
+  if (!bar) return;
+  for (const btn of bar.querySelectorAll("[data-pano-idx]")) {
+    const i = Number(btn.getAttribute("data-pano-idx"));
+    btn.classList.toggle("pano3d360-picker__btn--active", i === activePanoKcnRealIndex);
+    btn.setAttribute("aria-pressed", i === activePanoKcnRealIndex ? "true" : "false");
+  }
+}
+
+function setPanoKcnRealIndex(idx) {
+  if (idx < 0 || idx >= PANO_KCN_REAL_URLS.length) return;
+  if (idx === activePanoKcnRealIndex) {
+    syncPanoKcnRealPickerUI();
+    return;
+  }
+  activePanoKcnRealIndex = idx;
+  if (viewMode === "panoKcnReal") applyImmersivePanoContent("panoKcnReal");
+  syncPanoKcnRealPickerUI();
+}
+
+function getImmersivePanoramaUrlForMode(mode) {
+  if (mode === "pano360") return AERIAL_PANO_URL;
+  if (mode === "pano3d360") return getPano3d360Url();
+  if (mode === "panoKcnReal") return getPanoKcnRealUrl();
+  return AERIAL_PANO_URL;
+}
+
+function pickImmersiveHotspotsForMode(mode) {
+  if (mode === "pano360") return IMMERSIVE_HOTSPOTS_AERIAL;
+  if (mode === "pano3d360") {
+    return IMMERSIVE_HOTSPOTS_3D360.filter((h) => h.panoIndex === activePano3d360Index);
+  }
+  if (mode === "panoKcnReal") {
+    return IMMERSIVE_HOTSPOTS_KCN_REAL.filter((h) => h.panoIndex === activePanoKcnRealIndex);
+  }
+  return [];
 }
 
 function applyImmersivePanoContent(mode) {
-  if (!immersiveScene || !immersiveSphereMesh) return;
-  const url = mode === "pano3d360" ? PANO_3D360_URL : AERIAL_PANO_URL;
-  const hotspotList =
-    mode === "pano3d360" ? IMMERSIVE_HOTSPOTS_3D360 : IMMERSIVE_HOTSPOTS_AERIAL;
+  if (!immersiveScene || !immersiveSphereMesh || !immersiveFlatMeshes[0]) return;
+  const url = getImmersivePanoramaUrlForMode(mode);
+  const hotspotList = pickImmersiveHotspotsForMode(mode);
+
+  if (mode === "panoKcnReal") {
+    immersiveSphereMesh.visible = false;
+    immersiveFlatMeshes.forEach((m, i) => {
+      if (!m) return;
+      m.visible = i === kcnFlatFrontIndex;
+    });
+    applyImmersiveKcnRealFlat(url);
+    return;
+  }
+
+  kcnFlatTransitionGen += 1;
+  snapKcnFlatToFrontOnly();
+  immersiveFlatMeshes.forEach((m) => {
+    if (m) m.visible = false;
+  });
+  immersiveSphereMesh.visible = true;
   loadImmersivePanoramaUrl(url, (tex) => {
     if (!immersiveSphereMesh) return;
     const mat = immersiveSphereMesh.material;
@@ -387,17 +764,30 @@ function ensureImmersivePano() {
   if (immersiveRenderer) return;
   const root = document.getElementById("immersive-pano-root");
   if (!root) return;
+  const aspect0 = window.innerWidth / Math.max(window.innerHeight, 1);
   immersiveScene = new THREE.Scene();
-  immersiveCamera = new THREE.PerspectiveCamera(
+  immersivePerspectiveCamera = new THREE.PerspectiveCamera(
     72,
-    window.innerWidth / Math.max(window.innerHeight, 1),
+    aspect0,
     0.1,
     1000
   );
-  immersiveRenderer = new THREE.WebGLRenderer({ antialias: true });
+  immersiveOrthoCamera = new THREE.OrthographicCamera(
+    -aspect0,
+    aspect0,
+    1,
+    -1,
+    0.05,
+    50
+  );
+  immersiveOrthoCamera.position.set(0, 0, 0);
+  immersiveOrthoCamera.lookAt(0, 0, -1);
+
+  immersiveRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   immersiveRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   immersiveRenderer.setSize(window.innerWidth, window.innerHeight);
   immersiveRenderer.outputColorSpace = THREE.SRGBColorSpace;
+  immersiveRenderer.sortObjects = true;
   root.appendChild(immersiveRenderer.domElement);
 
   const geo = new THREE.SphereGeometry(500, 56, 36);
@@ -407,6 +797,21 @@ function ensureImmersivePano() {
     new THREE.MeshBasicMaterial({ color: 0x305c5a })
   );
   immersiveScene.add(immersiveSphereMesh);
+
+  const flatMat = () =>
+    new THREE.MeshBasicMaterial({
+      color: 0x305c5a,
+      transparent: true,
+      opacity: 1,
+      depthWrite: true,
+    });
+  for (let i = 0; i < 2; i += 1) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), flatMat());
+    m.visible = false;
+    m.position.set(0, 0, -1);
+    immersiveScene.add(m);
+    immersiveFlatMeshes[i] = m;
+  }
 
   immersiveRenderer.domElement.addEventListener("pointerdown", (e) => {
     if (!isImmersivePanoramaMode()) return;
@@ -420,79 +825,120 @@ function ensureImmersivePano() {
 }
 
 function resizeImmersive() {
-  if (!immersiveRenderer || !immersiveCamera) return;
-  immersiveCamera.aspect = window.innerWidth / Math.max(window.innerHeight, 1);
-  immersiveCamera.updateProjectionMatrix();
-  immersiveRenderer.setSize(window.innerWidth, window.innerHeight);
+  if (!immersiveRenderer || !immersivePerspectiveCamera) return;
+  const w = window.innerWidth;
+  const h = Math.max(window.innerHeight, 1);
+  const av = w / h;
+  immersivePerspectiveCamera.aspect = av;
+  immersivePerspectiveCamera.updateProjectionMatrix();
+  immersiveOrthoCamera.left = -av;
+  immersiveOrthoCamera.right = av;
+  immersiveOrthoCamera.top = 1;
+  immersiveOrthoCamera.bottom = -1;
+  immersiveOrthoCamera.updateProjectionMatrix();
+  immersiveRenderer.setSize(w, h);
+  if (isImmersiveKcnFlatMode()) {
+    const fm = getKcnFlatFrontMesh();
+    const om = immersiveFlatMeshes[1 - kcnFlatFrontIndex];
+    const refMesh =
+      kcnFlatCrossfading && om?.visible && om.material.map ? om : fm;
+    if (refMesh?.material.map?.image) {
+      const { pw, ph } = computeKcnFlatPlaneSize(refMesh.material.map);
+      applyKcnFlatPlaneGeometry(fm, pw, ph);
+      if (om?.visible) {
+        applyKcnFlatPlaneGeometry(om, pw, ph);
+      }
+      const hl = pickImmersiveHotspotsForMode("panoKcnReal");
+      addFlatImmersiveHotspots(immersiveScene, hl, pw, ph, fm.position.z);
+    }
+  }
 }
 
 function setViewMode(mode) {
-  if (mode !== "3d" && mode !== "pano360" && mode !== "pano3d360") return;
+  if (mode !== "pano3d360" && mode !== "panoKcnReal") return;
   viewMode = mode;
-  const immersiveOn = mode === "pano360" || mode === "pano3d360";
-  document.body.classList.toggle("view-pano360", immersiveOn);
+  document.body.classList.add("view-pano360");
+  document.body.classList.toggle("view-pano3d360", mode === "pano3d360");
+  document.body.classList.toggle("view-pano-kcn-real", mode === "panoKcnReal");
 
   const wrap = document.getElementById("canvas-wrap");
   const root = document.getElementById("immersive-pano-root");
-  const t3 = document.getElementById("tab-view-3d");
-  const tp = document.getElementById("tab-view-pano360");
+  const tkcn = document.getElementById("tab-view-pano-kcn-real");
   const t3d = document.getElementById("tab-view-pano3d360");
   const hint = document.querySelector(".pano360-hint");
 
-  const clearTabActive = () => {
-    for (const el of [t3, tp, t3d]) {
-      el?.classList.remove("view-toggle__btn--active");
-      el?.setAttribute("aria-selected", "false");
-    }
-  };
+  closeImmersiveHotspotSheet();
+  closeModal();
+  ensureImmersivePano();
+  applyImmersivePanoContent(mode);
+  immersiveLon = immersiveLat = 0;
+  immersiveLonView = immersiveLatView = 0;
+  resizeImmersive();
+  syncPano3d360PickerUI();
+  syncPanoKcnRealPickerUI();
+  if (wrap) {
+    wrap.classList.add("view-hidden");
+    wrap.setAttribute("aria-hidden", "true");
+  }
+  if (root) {
+    root.classList.add("is-active");
+    root.setAttribute("aria-hidden", "false");
+  }
+  if (controls) controls.enabled = false;
 
-  if (mode === "3d") {
-    closeImmersiveHotspotSheet();
-    if (root) {
-      root.classList.remove("is-active");
-      root.setAttribute("aria-hidden", "true");
+  for (const el of [tkcn, t3d]) {
+    el?.classList.remove("view-toggle__btn--active");
+    el?.setAttribute("aria-selected", "false");
+  }
+  if (mode === "panoKcnReal") {
+    tkcn?.classList.add("view-toggle__btn--active");
+    tkcn?.setAttribute("aria-selected", "true");
+    if (hint) {
+      hint.innerHTML =
+        "Ảnh phối <strong>thực tế dự án</strong> (không phải 360°) — <strong>chấm vàng</strong> là hotspot (chạm) · <kbd>R</kbd> / <kbd>Esc</kbd>";
     }
-    if (wrap) {
-      wrap.classList.remove("view-hidden");
-      wrap.setAttribute("aria-hidden", "false");
-    }
-    if (controls) controls.enabled = !modalOpen;
-    clearTabActive();
-    t3?.classList.add("view-toggle__btn--active");
-    t3?.setAttribute("aria-selected", "true");
   } else {
-    closeModal();
-    ensureImmersivePano();
-    applyImmersivePanoContent(mode);
-    immersiveLon = 0;
-    immersiveLat = 0;
-    resizeImmersive();
-    if (wrap) {
-      wrap.classList.add("view-hidden");
-      wrap.setAttribute("aria-hidden", "true");
-    }
-    if (root) {
-      root.classList.add("is-active");
-      root.setAttribute("aria-hidden", "false");
-    }
-    if (controls) controls.enabled = false;
-    clearTabActive();
-    if (mode === "pano360") {
-      tp?.classList.add("view-toggle__btn--active");
-      tp?.setAttribute("aria-selected", "true");
-      if (hint) {
-        hint.innerHTML =
-          "Ảnh 360° nhìn từ cao (minh họa) — <strong>chấm vàng</strong> là hotspot · kéo xoay · <kbd style=\"font:inherit;font-weight:700\">R</kbd> / <kbd style=\"font:inherit;font-weight:700\">Esc</kbd>";
-      }
-    } else {
-      t3d?.classList.add("view-toggle__btn--active");
-      t3d?.setAttribute("aria-selected", "true");
-      if (hint) {
-        hint.innerHTML =
-          "3D 360° sân công nghiệp (CC0 Poly Haven) — <strong>chấm vàng</strong> là hotspot · kéo xoay · <kbd style=\"font:inherit;font-weight:700\">R</kbd> / <kbd style=\"font:inherit;font-weight:700\">Esc</kbd>";
-      }
+    t3d?.classList.add("view-toggle__btn--active");
+    t3d?.setAttribute("aria-selected", "true");
+    if (hint) {
+      hint.innerHTML =
+        "<strong>Minh họa</strong> tour 360° thực địa (TT 01–04) — hướng triển khai tương lai — <strong>chấm vàng</strong> là hotspot · kéo xoay · <kbd>R</kbd> / <kbd>Esc</kbd>";
     }
   }
+  document.querySelectorAll(".mobile-nav__tab[data-set-view]").forEach((btn) => {
+    const m = btn.getAttribute("data-set-view");
+    const on = viewMode === m;
+    btn.classList.toggle("mobile-nav__tab--active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
+function closeMobileNav() {
+  if (!document.body.classList.contains("mobile-nav-open")) return;
+  document.body.classList.remove("mobile-nav-open");
+  const toggle = document.getElementById("mobile-nav-toggle");
+  const drawer = document.getElementById("mobile-nav-drawer");
+  const overlay = document.getElementById("mobile-nav-overlay");
+  toggle?.setAttribute("aria-expanded", "false");
+  drawer?.setAttribute("aria-hidden", "true");
+  overlay?.setAttribute("aria-hidden", "true");
+}
+
+const MOBILE_NAV_BREAKPOINT_PX = 720;
+
+function openMobileNav() {
+  document.body.classList.add("mobile-nav-open");
+  const toggle = document.getElementById("mobile-nav-toggle");
+  const drawer = document.getElementById("mobile-nav-drawer");
+  const overlay = document.getElementById("mobile-nav-overlay");
+  toggle?.setAttribute("aria-expanded", "true");
+  drawer?.setAttribute("aria-hidden", "false");
+  overlay?.setAttribute("aria-hidden", "false");
+}
+
+function toggleMobileNav() {
+  if (document.body.classList.contains("mobile-nav-open")) closeMobileNav();
+  else openMobileNav();
 }
 
 function initMain() {
@@ -589,7 +1035,7 @@ function initMain() {
       );
       if (immersivePanMaxDist > 14) immersivePanSliding = true;
     }
-    if (immersivePanSliding && isImmersivePanoramaMode()) {
+    if (immersivePanSliding && isImmersivePanoramaMode() && !isImmersiveKcnFlatMode()) {
       const dx = e.clientX - immersivePx;
       const dy = e.clientY - immersivePy;
       immersivePx = e.clientX;
@@ -807,8 +1253,8 @@ function addMarkers() {
   const col = new THREE.CylinderGeometry(0.85, 1.15, 5.5, 20);
   const cap = new THREE.SphereGeometry(1.45, 28, 20);
   const mat = new THREE.MeshStandardMaterial({
-    color: 0xdcb248,
-    emissive: 0x8b5a1a,
+    color: 0xe4c065,
+    emissive: 0x6b5420,
     emissiveIntensity: 0.4,
     roughness: 0.35,
     metalness: 0.55,
@@ -825,7 +1271,7 @@ function addMarkers() {
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(2.4, 0.12, 10, 32),
       new THREE.MeshBasicMaterial({
-        color: 0xb58234,
+        color: 0xc9a227,
         transparent: true,
         opacity: 0.55,
       })
@@ -872,6 +1318,8 @@ function initPano() {
 function openModal(poi) {
   if (viewMode !== "3d") return;
   modalOpen = true;
+  modalPanoLonView = modalPanoLon;
+  modalPanoLatView = modalPanoLat;
   const backdrop = document.getElementById("modal-backdrop");
   document.getElementById("modal-title").textContent = poi.title;
   document.getElementById("modal-desc").textContent = poi.description;
@@ -924,20 +1372,27 @@ function onResize() {
 
 function animate() {
   requestAnimationFrame(animate);
+  stepPanoramaAngleSmoothing();
   if (viewMode === "3d") {
     controls.update();
     mainRenderer.render(mainScene, mainCamera);
   }
   if (isImmersivePanoramaMode() && immersiveRenderer) {
-    updatePanoCamera(immersiveCamera, immersiveLon, immersiveLat);
+    if (!isImmersiveKcnFlatMode()) {
+      updatePanoCamera(
+        immersivePerspectiveCamera,
+        immersiveLonView,
+        immersiveLatView
+      );
+    }
     const pulse = 1 + 0.07 * Math.sin(performance.now() * 0.0028);
     for (const m of immersiveHotspotMeshes) {
       if (m.geometry?.type === "TorusGeometry") m.scale.setScalar(pulse);
     }
-    immersiveRenderer.render(immersiveScene, immersiveCamera);
+    immersiveRenderer.render(immersiveScene, getImmersiveActiveCamera());
   }
   if (modalOpen && panoRenderer) {
-    updatePanoCamera(panoCamera, modalPanoLon, modalPanoLat);
+    updatePanoCamera(panoCamera, modalPanoLonView, modalPanoLatView);
     panoRenderer.render(panoScene, panoCamera);
   }
 }
@@ -948,14 +1403,47 @@ document.getElementById("modal-backdrop").addEventListener("click", (e) => {
 });
 
 initMain();
+setViewMode("panoKcnReal");
 animate();
 
-document.getElementById("btn-reset-view")?.addEventListener("click", () => resetView());
+document.querySelectorAll(".js-btn-reset-view").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    resetView();
+    closeMobileNav();
+  });
+});
 
-document.getElementById("tab-view-3d")?.addEventListener("click", () => setViewMode("3d"));
-document.getElementById("tab-view-pano360")?.addEventListener("click", () => setViewMode("pano360"));
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-set-view]");
+  if (!tab) return;
+  const mode = tab.getAttribute("data-set-view");
+  if (mode !== "panoKcnReal" && mode !== "pano3d360") return;
+  e.preventDefault();
+  setViewMode(mode);
+  closeMobileNav();
+});
 
-document.getElementById("tab-view-pano3d360")?.addEventListener("click", () => setViewMode("pano3d360"));
+document.getElementById("mobile-nav-toggle")?.addEventListener("click", () => toggleMobileNav());
+document.getElementById("mobile-nav-close")?.addEventListener("click", () => closeMobileNav());
+document.getElementById("mobile-nav-overlay")?.addEventListener("click", () => closeMobileNav());
+
+window.addEventListener("resize", () => {
+  if (window.innerWidth > MOBILE_NAV_BREAKPOINT_PX) closeMobileNav();
+});
+
+document.getElementById("pano3d360-picker")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-pano-idx]");
+  if (!btn || viewMode !== "pano3d360") return;
+  e.preventDefault();
+  setPano3d360Index(Number(btn.getAttribute("data-pano-idx")));
+});
+
+document.getElementById("pano-kcn-real-picker")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-pano-idx]");
+  if (!btn || viewMode !== "panoKcnReal") return;
+  e.preventDefault();
+  setPanoKcnRealIndex(Number(btn.getAttribute("data-pano-idx")));
+});
 
 document.getElementById("immersive-hotspot-close")?.addEventListener("click", () => closeImmersiveHotspotSheet());
 document.getElementById("immersive-hotspot-sheet")?.addEventListener("click", (e) => {
@@ -963,6 +1451,10 @@ document.getElementById("immersive-hotspot-sheet")?.addEventListener("click", (e
 });
 
 document.addEventListener("keydown", (e) => {
+  if (e.code === "Escape" && document.body.classList.contains("mobile-nav-open")) {
+    closeMobileNav();
+    return;
+  }
   if (e.code === "Escape" && immersiveHotspotSheetOpen) {
     closeImmersiveHotspotSheet();
     return;
