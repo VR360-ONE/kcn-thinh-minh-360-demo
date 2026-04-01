@@ -1,5 +1,7 @@
 # Quy trình deploy static lên FTP staging (stg.vr360.one)
 
+Khi mở **cả workspace cha `ai-tools`** trong Cursor: rule ngữ cảnh deploy staging nằm tại `.cursor/rules/workspace-stg-vr360-deploy.mdc` (nhiều project trong một folder, `stg.vr360.one` là deploy chính).
+
 Script mẫu trong repo này: [`deploy-ftp.sh`](./deploy-ftp.sh). Nếu bạn clone cả workspace cha `ai-tools` (có thư mục `docs/`), có thêm bản cùng nội dung tại `docs/deploy-ftp-stg-vr360.md`.
 
 Tài liệu mô tả cách đẩy **site tĩnh** (HTML/JS/CSS/assets) lên FTP `stg.vr360.one`, **áp dụng lại cho project static khác**.
