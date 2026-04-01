@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Triển khai static lên FTP stg.vr360.one → du-an/<DEPLOY_SUBDIR>/
 #
+# Chi tiết: DEPLOY-FTP.md (cùng thư mục). Trong monorepo ai-tools: ../docs/deploy-ftp-stg-vr360.md.
 # Cài lftp (macOS): brew install lftp
 #
 # Tạo file .env.deploy (đã gitignore) hoặc export biến:
