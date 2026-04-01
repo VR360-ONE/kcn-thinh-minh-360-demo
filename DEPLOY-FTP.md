@@ -6,6 +6,13 @@ Script mẫu trong repo này: [`deploy-ftp.sh`](./deploy-ftp.sh). Nếu bạn cl
 
 Tài liệu mô tả cách đẩy **site tĩnh** (HTML/JS/CSS/assets) lên FTP `stg.vr360.one`, **áp dụng lại cho project static khác**.
 
+## GitHub org VR360-ONE (quy ước cùng deploy FTP)
+
+- **FTP ≠ Git:** deploy FTP **không** tự push GitHub; push Git **không** tự upload FTP.
+- **Quy ước VR360-ONE:** khi **deploy staging** (`./deploy-ftp.sh`) thì **cũng** **`git commit` + `git push`** lên repo org **[VR360-ONE](https://github.com/VR360-ONE)** (repo ví dụ: [kcn-thinh-minh-360-demo](https://github.com/VR360-ONE/kcn-thinh-minh-360-demo)), để source trên Git khớp bản đang chạy trên `stg.vr360.one`.
+- **Thứ tự nên làm:** commit → `git push` → `./deploy-ftp.sh`.
+- Org: [github.com/orgs/VR360-ONE/dashboard](https://github.com/orgs/VR360-ONE/dashboard).
+
 ## Dùng cho source mới
 
 1. **Copy** `deploy-ftp.sh` vào **root thư mục static** (cùng cấp `index.html`).
@@ -101,5 +108,6 @@ FTP chỉ phản ánh nội dung **lúc bạn chạy** `deploy-ftp.sh`. Muốn b
 1. [ ] Copy `deploy-ftp.sh`, `chmod +x`
 2. [ ] Sửa default `FTP_USER` và `DEPLOY_SUBDIR` (hoặc `.env.deploy`)
 3. [ ] `.gitignore` có `.env*` / `.env.deploy`
-4. [ ] `./deploy-ftp.sh` → mở URL `ws-01` hoặc `ws-02` tương ứng
-5. [ ] DevTools → Network: `index.html`, JS chính, asset lớn trả 200
+4. [ ] **VR360-ONE:** `git commit` + `git push` lên repo org [VR360-ONE](https://github.com/VR360-ONE) trước khi deploy staging
+5. [ ] `./deploy-ftp.sh` → mở URL `ws-01` hoặc `ws-02` tương ứng
+6. [ ] DevTools → Network: `index.html`, JS chính, asset lớn trả 200
