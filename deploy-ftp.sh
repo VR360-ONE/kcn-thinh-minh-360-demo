@@ -5,7 +5,7 @@
 #
 # Tạo file .env.deploy (đã gitignore) hoặc export biến:
 #   FTP_HOST=stg.vr360.one
-#   FTP_USER=ftp_stg_ws02
+#   FTP_USER=ftp_stg_ws01
 #   FTP_PASS=...
 #   FTP_PORT=21
 #   FTP_REMOTE_BASE=du-an
@@ -24,7 +24,7 @@ if [[ -f .env.deploy ]]; then
 fi
 
 : "${FTP_HOST:=stg.vr360.one}"
-: "${FTP_USER:=ftp_stg_ws02}"
+: "${FTP_USER:=ftp_stg_ws01}"
 : "${FTP_PORT:=21}"
 : "${FTP_REMOTE_BASE:=du-an}"
 : "${DEPLOY_SUBDIR:=kcn-thinh-minh-360-demo}"
@@ -44,13 +44,17 @@ echo "Mirror . → ${FTP_HOST}:${REMOTE_PATH}/"
 
 LFTP_SCRIPT=$(mktemp)
 trap 'rm -f "$LFTP_SCRIPT"' EXIT
-cat > "$LFTP_SCRIPT" << LFTPINNER
-set ssl:verify-certificate no
-set ftp:passive-mode true
-mirror -R --verbose --parallel=3 --exclude-glob '.git/**' --exclude-glob '.env*' --exclude-glob '.DS_Store' . ${REMOTE_PATH}
-bye
-LFTPINNER
+{
+  printf '%s\n' "set ssl:verify-certificate no"
+  printf '%s\n' "set ftp:passive-mode true"
+  printf 'open -u %s,%s -p %s %s\n' "$FTP_USER" "$FTP_PASS" "$FTP_PORT" "$FTP_HOST"
+  printf 'lcd %s\n' "$SCRIPT_DIR"
+  printf '%s\n' "mirror -R --verbose --parallel=3 --exclude-glob '.git/**' --exclude-glob '.env*' --exclude-glob '.DS_Store' . ${REMOTE_PATH}"
+  printf '%s\n' "bye"
+} > "$LFTP_SCRIPT"
 
-lftp -u "${FTP_USER},${FTP_PASS}" -p "${FTP_PORT}" "${FTP_HOST}" -f "$LFTP_SCRIPT"
+lftp -f "$LFTP_SCRIPT"
 
-echo "Xong. Mở: https://stg.vr360.one/ws-02/${REMOTE_PATH}/"
+echo "Xong. Thử mở (đổi ws-01/ws-02 theo tài khoản FTP):"
+echo "  https://stg.vr360.one/ws-01/${REMOTE_PATH}/"
+echo "  https://stg.vr360.one/ws-02/${REMOTE_PATH}/"
