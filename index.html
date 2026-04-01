@@ -249,11 +249,51 @@
       filter: drop-shadow(0 4px 48px rgba(0, 0, 0, 0.45));
     }
 
+    #immersive-loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 7;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(5, 13, 10, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: auto;
+      transition: opacity 0.2s var(--ease);
+    }
+    #immersive-loading.immersive-loading--visible {
+      display: flex;
+    }
+    #immersive-loading[aria-hidden="true"] {
+      pointer-events: none;
+    }
+    .immersive-loading__spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid var(--line-faint);
+      border-top-color: var(--gold-bright);
+      animation: immersiveSpin 0.75s linear infinite;
+    }
+    @keyframes immersiveSpin {
+      to { transform: rotate(360deg); }
+    }
+    .immersive-loading__text {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ivory-muted);
+    }
+
     #immersive-hotspot-sheet {
       display: none;
       position: fixed;
       inset: 0;
-      z-index: 6;
+      z-index: 8;
       align-items: flex-end;
       justify-content: center;
       padding: 16px;
@@ -1218,6 +1258,16 @@
     role="application"
     aria-label="Ảnh panorama 360 độ toàn màn hình"
   ></div>
+  <div
+    id="immersive-loading"
+    class="immersive-loading"
+    aria-live="polite"
+    aria-busy="false"
+    aria-hidden="true"
+  >
+    <div class="immersive-loading__spinner" aria-hidden="true"></div>
+    <span class="immersive-loading__text">Đang tải góc nhìn…</span>
+  </div>
   <div class="immersive-watermark-layer">
     <div class="immersive-watermark">
       <a

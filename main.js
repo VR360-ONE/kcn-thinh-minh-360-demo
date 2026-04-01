@@ -233,6 +233,30 @@ let immersivePanSliding = false;
 const immersiveHotspotMeshes = [];
 let immersiveHotspotSheetOpen = false;
 
+let immersiveLoadingGen = 0;
+
+function showImmersiveLoading() {
+  immersiveLoadingGen += 1;
+  const id = immersiveLoadingGen;
+  const el = document.getElementById("immersive-loading");
+  if (el) {
+    el.classList.add("immersive-loading--visible");
+    el.setAttribute("aria-busy", "true");
+    el.setAttribute("aria-hidden", "false");
+  }
+  return id;
+}
+
+function hideImmersiveLoading(id) {
+  if (id !== immersiveLoadingGen) return;
+  const el = document.getElementById("immersive-loading");
+  if (el) {
+    el.classList.remove("immersive-loading--visible");
+    el.setAttribute("aria-busy", "false");
+    el.setAttribute("aria-hidden", "true");
+  }
+}
+
 const DEFAULT_CAM_POS = new THREE.Vector3(175, 195, 205);
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
 
@@ -489,14 +513,23 @@ function snapKcnFlatToFrontOnly() {
   fm.renderOrder = 0;
 }
 
-function applyImmersiveKcnRealFlat(url) {
+function applyImmersiveKcnRealFlat(url, loadId) {
   const m0 = immersiveFlatMeshes[0];
   const m1 = immersiveFlatMeshes[1];
-  if (!m0 || !m1) return;
+  if (!m0 || !m1) {
+    hideImmersiveLoading(loadId);
+    return;
+  }
 
   loadImmersivePanoramaUrl(url, (tex) => {
-    if (!immersiveFlatMeshes[0] || !immersiveFlatMeshes[1]) return;
-    if (getPanoKcnRealUrl() !== url) return;
+    if (!immersiveFlatMeshes[0] || !immersiveFlatMeshes[1]) {
+      hideImmersiveLoading(loadId);
+      return;
+    }
+    if (getPanoKcnRealUrl() !== url) {
+      hideImmersiveLoading(loadId);
+      return;
+    }
 
     kcnFlatTransitionGen += 1;
     const myGen = kcnFlatTransitionGen;
@@ -515,6 +548,7 @@ function applyImmersiveKcnRealFlat(url) {
       matF.needsUpdate = true;
       front.visible = true;
       addFlatImmersiveHotspots(immersiveScene, hlNow(), 2, 2, -1);
+      hideImmersiveLoading(loadId);
       return;
     }
 
@@ -529,6 +563,7 @@ function applyImmersiveKcnRealFlat(url) {
       matF.needsUpdate = true;
       front.visible = true;
       addFlatImmersiveHotspots(immersiveScene, hlNow(), pw, ph, front.position.z);
+      hideImmersiveLoading(loadId);
       return;
     }
 
@@ -542,8 +577,11 @@ function applyImmersiveKcnRealFlat(url) {
       front.visible = true;
       back.visible = false;
       addFlatImmersiveHotspots(immersiveScene, hlNow(), pw, ph, front.position.z);
+      hideImmersiveLoading(loadId);
       return;
     }
+
+    hideImmersiveLoading(loadId);
 
     matB.map = tex;
     matB.color.setHex(0xffffff);
@@ -732,6 +770,7 @@ function applyImmersivePanoContent(mode) {
   if (!immersiveScene || !immersiveSphereMesh || !immersiveFlatMeshes[0]) return;
   const url = getImmersivePanoramaUrlForMode(mode);
   const hotspotList = pickImmersiveHotspotsForMode(mode);
+  const loadId = showImmersiveLoading();
 
   if (mode === "panoKcnReal") {
     immersiveSphereMesh.visible = false;
@@ -739,7 +778,7 @@ function applyImmersivePanoContent(mode) {
       if (!m) return;
       m.visible = i === kcnFlatFrontIndex;
     });
-    applyImmersiveKcnRealFlat(url);
+    applyImmersiveKcnRealFlat(url, loadId);
     return;
   }
 
@@ -750,12 +789,16 @@ function applyImmersivePanoContent(mode) {
   });
   immersiveSphereMesh.visible = true;
   loadImmersivePanoramaUrl(url, (tex) => {
-    if (!immersiveSphereMesh) return;
+    if (!immersiveSphereMesh) {
+      hideImmersiveLoading(loadId);
+      return;
+    }
     const mat = immersiveSphereMesh.material;
     if (mat.map) mat.map.dispose();
     mat.map = tex || null;
     mat.color.setHex(tex ? 0xffffff : 0x305c5a);
     mat.needsUpdate = true;
+    hideImmersiveLoading(loadId);
   });
   addImmersiveHotspots(immersiveScene, hotspotList);
 }
