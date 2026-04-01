@@ -87,6 +87,9 @@
 
     .view-toggle {
       display: inline-flex;
+      flex-wrap: wrap;
+      max-width: min(100%, 440px);
+      justify-content: flex-end;
       padding: 3px;
       background: #fff;
       border: 1px solid var(--line);
@@ -774,7 +777,17 @@
             aria-selected="false"
             aria-controls="immersive-pano-root"
           >
-            Ảnh 360° tổng thể
+            360° tổng thể
+          </button>
+          <button
+            type="button"
+            id="tab-view-pano3d360"
+            class="view-toggle__btn"
+            role="tab"
+            aria-selected="false"
+            aria-controls="immersive-pano-root"
+          >
+            3D 360
           </button>
         </div>
         <button type="button" class="btn btn--primary" id="btn-reset-view" title="Phím tắt R">
@@ -840,7 +853,7 @@
       </div>
       <p class="poi-hint">
         <strong>Chế độ 3D:</strong> chọn cột <em>đồng</em> để mở popup panorama tại POI.
-        <strong>Chế độ ảnh 360° tổng thể:</strong> dùng tab trên thanh công cụ — toàn màn hình, cùng ảnh CC0 minh họa.
+        <strong>Chế độ 360 toàn màn hình:</strong> tab <em>360° tổng thể</em> (fly-over) hoặc <em>3D 360</em> (sân công nghiệp mặt đất, CC0 Poly Haven) — hotspot vàng, kéo xoay.
       </p>
     </div>
   </aside>

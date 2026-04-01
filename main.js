@@ -21,11 +21,17 @@ const AERIAL_PANO_URL = new URL(
   import.meta.url
 ).href;
 
+// Chế độ 3D 360: sân công nghiệp (mắt gần mặt đất) — CC0 Poly Haven "overcast_industrial_courtyard"
+const PANO_3D360_URL = new URL(
+  "./panoramas/overcast_industrial_courtyard_cc0.jpg",
+  import.meta.url
+).href;
+
 /**
- * Hotspot trong chế độ ảnh 360° tổng thể (lon/lat độ, cùng hệ với kéo xoay).
+ * Hotspot chế độ flycam / tổng thể (hilltop).
  * Vị trí minh họa — khi có ảnh flycam thật, căn lại lon/lat theo ảnh.
  */
-const IMMERSIVE_HOTSPOTS = [
+const IMMERSIVE_HOTSPOTS_AERIAL = [
   {
     id: "zone-a",
     title: "Phân khu sản xuất (minh họa)",
@@ -57,6 +63,42 @@ const IMMERSIVE_HOTSPOTS = [
       "Gợi ý hiển thị đường điện, XLNT, trạm bơm — dữ liệu từ một nguồn CMS / JSON.",
     lon: -95,
     lat: -22,
+  },
+];
+
+/** Hotspot chế độ 3D 360 (courtyard / nhà xưởng — overcast industrial) */
+const IMMERSIVE_HOTSPOTS_3D360 = [
+  {
+    id: "yard-main",
+    title: "Sân bê tông & luồng xe (minh họa)",
+    description:
+      "Góc mắt gần mặt đất trong khu công nghiệp. Sản phẩm thật: neo hotspot theo lối đi, cổng, nhà xưởng trên ảnh 360 thực địa.",
+    lon: -25,
+    lat: 2,
+  },
+  {
+    id: "warehouse-line",
+    title: "Dãy nhà xưởng",
+    description:
+      "Minh họa kho / xưởng sản xuất. Có thể liên kết mặt bằng phân lô, diện tích cho thuê.",
+    lon: 55,
+    lat: -8,
+  },
+  {
+    id: "gate-area",
+    title: "Khu cổng / kiểm soát",
+    description:
+      "Điểm nhấn an ninh, logistics. Thêm video flycam hoặc sơ đồ luồng vào ra.",
+    lon: 140,
+    lat: -18,
+  },
+  {
+    id: "sky-weather",
+    title: "Trời trầm — ánh sáng đồng nhất",
+    description:
+      "Ảnh CC0 Poly Haven (overcast_industrial_courtyard). Không phải hiện trường KCN Thịnh Minh.",
+    lon: -160,
+    lat: 35,
   },
 ];
 
@@ -97,14 +139,18 @@ const markerMeshes = [];
 let panoScene, panoCamera, panoRenderer;
 let modalOpen = false;
 
-/** @type {"3d" | "pano360"} */
+/** @type {"3d" | "pano360" | "pano3d360"} */
 let viewMode = "3d";
 
 let sharedPanoTex = null;
 const panoTexWaiters = [];
 
-let aerialPanoTex = null;
-const aerialTexWaiters = [];
+/** @type {Map<string, THREE.Texture | null | undefined>} */
+const immersiveTexCache = new Map();
+/** @type {Map<string, Array<(t: THREE.Texture | null) => void>>} */
+const immersiveTexWaiters = new Map();
+
+let immersiveSphereMesh = null;
 
 let immersiveScene, immersiveCamera, immersiveRenderer;
 let immersiveReady = false;
@@ -160,31 +206,37 @@ function loadSharedPanorama(onLoaded) {
   panoTexWaiters.push(onLoaded);
 }
 
-function loadAerialPanorama(onLoaded) {
-  if (aerialPanoTex !== undefined && aerialPanoTex !== null) {
-    onLoaded(aerialPanoTex);
+function loadImmersivePanoramaUrl(url, onLoaded) {
+  const cached = immersiveTexCache.get(url);
+  if (cached !== undefined && cached !== null) {
+    onLoaded(cached);
     return;
   }
-  if (aerialPanoTex === null && aerialTexWaiters.length === 0) {
+  let waiters = immersiveTexWaiters.get(url);
+  if (!waiters) {
+    immersiveTexWaiters.set(url, []);
+    waiters = immersiveTexWaiters.get(url);
     const loader = new THREE.TextureLoader();
     loader.crossOrigin = "anonymous";
     loader.load(
-      AERIAL_PANO_URL,
+      url,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
-        aerialPanoTex = tex;
-        const w = aerialTexWaiters.splice(0, aerialTexWaiters.length);
+        immersiveTexCache.set(url, tex);
+        const w = immersiveTexWaiters.get(url) || [];
+        immersiveTexWaiters.set(url, []);
         w.forEach((fn) => fn(tex));
       },
       undefined,
       () => {
-        aerialPanoTex = undefined;
-        const w = aerialTexWaiters.splice(0, aerialTexWaiters.length);
+        immersiveTexCache.delete(url);
+        const w = immersiveTexWaiters.get(url) || [];
+        immersiveTexWaiters.set(url, []);
         w.forEach((fn) => fn(null));
       }
     );
   }
-  aerialTexWaiters.push(onLoaded);
+  waiters.push(onLoaded);
 }
 
 function addEquirectMesh(scene, tex) {
@@ -206,7 +258,7 @@ function lonLatToPosition(lon, lat, radius) {
   );
 }
 
-function addImmersiveHotspots(scene) {
+function addImmersiveHotspots(scene, hotspotList) {
   const old = scene.getObjectByName("immersive-hotspots");
   if (old) scene.remove(old);
   immersiveHotspotMeshes.length = 0;
@@ -229,7 +281,7 @@ function addImmersiveHotspots(scene) {
   });
 
   const R = 448;
-  for (const h of IMMERSIVE_HOTSPOTS) {
+  for (const h of hotspotList) {
     const pos = lonLatToPosition(h.lon, h.lat, R);
     const core = new THREE.Mesh(new THREE.SphereGeometry(5.5, 20, 16), matCore);
     core.position.copy(pos);
@@ -311,6 +363,26 @@ function immersiveTryHotspotClick(clientX, clientY) {
   if (o?.userData?.hotspot) openImmersiveHotspotSheet(o.userData.hotspot);
 }
 
+function isImmersivePanoramaMode() {
+  return viewMode === "pano360" || viewMode === "pano3d360";
+}
+
+function applyImmersivePanoContent(mode) {
+  if (!immersiveScene || !immersiveSphereMesh) return;
+  const url = mode === "pano3d360" ? PANO_3D360_URL : AERIAL_PANO_URL;
+  const hotspotList =
+    mode === "pano3d360" ? IMMERSIVE_HOTSPOTS_3D360 : IMMERSIVE_HOTSPOTS_AERIAL;
+  loadImmersivePanoramaUrl(url, (tex) => {
+    if (!immersiveSphereMesh) return;
+    const mat = immersiveSphereMesh.material;
+    if (mat.map) mat.map.dispose();
+    mat.map = tex || null;
+    mat.color.setHex(tex ? 0xffffff : 0x305c5a);
+    mat.needsUpdate = true;
+  });
+  addImmersiveHotspots(immersiveScene, hotspotList);
+}
+
 function ensureImmersivePano() {
   if (immersiveRenderer) return;
   const root = document.getElementById("immersive-pano-root");
@@ -328,13 +400,16 @@ function ensureImmersivePano() {
   immersiveRenderer.outputColorSpace = THREE.SRGBColorSpace;
   root.appendChild(immersiveRenderer.domElement);
 
-  loadAerialPanorama((tex) => {
-    addEquirectMesh(immersiveScene, tex);
-  });
-  addImmersiveHotspots(immersiveScene);
+  const geo = new THREE.SphereGeometry(500, 56, 36);
+  geo.scale(-1, 1, 1);
+  immersiveSphereMesh = new THREE.Mesh(
+    geo,
+    new THREE.MeshBasicMaterial({ color: 0x305c5a })
+  );
+  immersiveScene.add(immersiveSphereMesh);
 
   immersiveRenderer.domElement.addEventListener("pointerdown", (e) => {
-    if (viewMode !== "pano360") return;
+    if (!isImmersivePanoramaMode()) return;
     immersivePointerDown = true;
     immersivePanSliding = false;
     immersivePanMaxDist = 0;
@@ -352,14 +427,24 @@ function resizeImmersive() {
 }
 
 function setViewMode(mode) {
-  if (mode !== "3d" && mode !== "pano360") return;
+  if (mode !== "3d" && mode !== "pano360" && mode !== "pano3d360") return;
   viewMode = mode;
-  document.body.classList.toggle("view-pano360", mode === "pano360");
+  const immersiveOn = mode === "pano360" || mode === "pano3d360";
+  document.body.classList.toggle("view-pano360", immersiveOn);
 
   const wrap = document.getElementById("canvas-wrap");
   const root = document.getElementById("immersive-pano-root");
   const t3 = document.getElementById("tab-view-3d");
   const tp = document.getElementById("tab-view-pano360");
+  const t3d = document.getElementById("tab-view-pano3d360");
+  const hint = document.querySelector(".pano360-hint");
+
+  const clearTabActive = () => {
+    for (const el of [t3, tp, t3d]) {
+      el?.classList.remove("view-toggle__btn--active");
+      el?.setAttribute("aria-selected", "false");
+    }
+  };
 
   if (mode === "3d") {
     closeImmersiveHotspotSheet();
@@ -372,13 +457,15 @@ function setViewMode(mode) {
       wrap.setAttribute("aria-hidden", "false");
     }
     if (controls) controls.enabled = !modalOpen;
-    t3?.setAttribute("aria-selected", "true");
-    tp?.setAttribute("aria-selected", "false");
+    clearTabActive();
     t3?.classList.add("view-toggle__btn--active");
-    tp?.classList.remove("view-toggle__btn--active");
+    t3?.setAttribute("aria-selected", "true");
   } else {
     closeModal();
     ensureImmersivePano();
+    applyImmersivePanoContent(mode);
+    immersiveLon = 0;
+    immersiveLat = 0;
     resizeImmersive();
     if (wrap) {
       wrap.classList.add("view-hidden");
@@ -389,10 +476,22 @@ function setViewMode(mode) {
       root.setAttribute("aria-hidden", "false");
     }
     if (controls) controls.enabled = false;
-    t3?.setAttribute("aria-selected", "false");
-    tp?.setAttribute("aria-selected", "true");
-    tp?.classList.add("view-toggle__btn--active");
-    t3?.classList.remove("view-toggle__btn--active");
+    clearTabActive();
+    if (mode === "pano360") {
+      tp?.classList.add("view-toggle__btn--active");
+      tp?.setAttribute("aria-selected", "true");
+      if (hint) {
+        hint.innerHTML =
+          "Ảnh 360° nhìn từ cao (minh họa) — <strong>chấm vàng</strong> là hotspot · kéo xoay · <kbd style=\"font:inherit;font-weight:700\">R</kbd> / <kbd style=\"font:inherit;font-weight:700\">Esc</kbd>";
+      }
+    } else {
+      t3d?.classList.add("view-toggle__btn--active");
+      t3d?.setAttribute("aria-selected", "true");
+      if (hint) {
+        hint.innerHTML =
+          "3D 360° sân công nghiệp (CC0 Poly Haven) — <strong>chấm vàng</strong> là hotspot · kéo xoay · <kbd style=\"font:inherit;font-weight:700\">R</kbd> / <kbd style=\"font:inherit;font-weight:700\">Esc</kbd>";
+      }
+    }
   }
 }
 
@@ -480,7 +579,7 @@ function initMain() {
       modalPanoLon -= dx * 0.12;
       modalPanoLat = Math.max(-85, Math.min(85, modalPanoLat + dy * 0.1));
     }
-    if (immersivePointerDown && viewMode === "pano360") {
+    if (immersivePointerDown && isImmersivePanoramaMode()) {
       immersivePanMaxDist = Math.max(
         immersivePanMaxDist,
         Math.hypot(
@@ -490,7 +589,7 @@ function initMain() {
       );
       if (immersivePanMaxDist > 14) immersivePanSliding = true;
     }
-    if (immersivePanSliding && viewMode === "pano360") {
+    if (immersivePanSliding && isImmersivePanoramaMode()) {
       const dx = e.clientX - immersivePx;
       const dy = e.clientY - immersivePy;
       immersivePx = e.clientX;
@@ -503,7 +602,7 @@ function initMain() {
     modalPanoDrag = false;
     if (
       immersivePointerDown &&
-      viewMode === "pano360" &&
+      isImmersivePanoramaMode() &&
       !immersivePanSliding &&
       immersivePanMaxDist <= 14
     ) {
@@ -820,7 +919,7 @@ function onResize() {
     panoCamera.aspect = c.clientWidth / Math.max(c.clientHeight, 1);
     panoCamera.updateProjectionMatrix();
   }
-  if (viewMode === "pano360") resizeImmersive();
+  if (isImmersivePanoramaMode()) resizeImmersive();
 }
 
 function animate() {
@@ -829,7 +928,7 @@ function animate() {
     controls.update();
     mainRenderer.render(mainScene, mainCamera);
   }
-  if (viewMode === "pano360" && immersiveRenderer) {
+  if (isImmersivePanoramaMode() && immersiveRenderer) {
     updatePanoCamera(immersiveCamera, immersiveLon, immersiveLat);
     const pulse = 1 + 0.07 * Math.sin(performance.now() * 0.0028);
     for (const m of immersiveHotspotMeshes) {
@@ -855,6 +954,8 @@ document.getElementById("btn-reset-view")?.addEventListener("click", () => reset
 
 document.getElementById("tab-view-3d")?.addEventListener("click", () => setViewMode("3d"));
 document.getElementById("tab-view-pano360")?.addEventListener("click", () => setViewMode("pano360"));
+
+document.getElementById("tab-view-pano3d360")?.addEventListener("click", () => setViewMode("pano3d360"));
 
 document.getElementById("immersive-hotspot-close")?.addEventListener("click", () => closeImmersiveHotspotSheet());
 document.getElementById("immersive-hotspot-sheet")?.addEventListener("click", (e) => {
