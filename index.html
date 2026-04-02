@@ -41,6 +41,11 @@
       --teal-ghost: rgba(201, 162, 39, 0.14);
     }
 
+    /* ~12.5%: menu, panel, nút, modal dùng rem → đồng loạt dễ đọc hơn */
+    html {
+      font-size: 112.5%;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -123,11 +128,11 @@
     }
     .view-toggle__btn {
       font-family: var(--font);
-      font-size: 0.58rem;
+      font-size: 0.64rem;
       font-weight: 700;
       letter-spacing: 0.11em;
       text-transform: uppercase;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border: none;
       border-radius: 999px;
       background: transparent;
@@ -158,18 +163,18 @@
 
     .pano360-hint {
       position: fixed;
-      bottom: max(52px, calc(env(safe-area-inset-bottom, 0px) + 44px));
+      bottom: max(3.25rem, calc(env(safe-area-inset-bottom, 0px) + 2.75rem));
       left: 50%;
       transform: translateX(-50%);
       z-index: 4;
       max-width: calc(100vw - 32px);
-      padding: 10px 20px;
+      padding: 12px 22px;
       background: var(--glass-strong);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--line);
       border-radius: 999px;
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       color: var(--ivory-muted);
       text-align: center;
       pointer-events: none;
@@ -184,7 +189,7 @@
     }
     .pano360-hint kbd {
       font-family: var(--font);
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       font-weight: 700;
       padding: 2px 7px;
       border-radius: 4px;
@@ -293,12 +298,14 @@
       display: none;
       position: fixed;
       inset: 0;
-      z-index: 8;
-      align-items: flex-end;
+      z-index: 22;
+      align-items: center;
       justify-content: center;
-      padding: 16px;
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
-      background: linear-gradient(transparent 25%, rgba(5, 13, 10, 0.75));
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
+        max(16px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+      background: rgba(5, 13, 10, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       pointer-events: none;
     }
     #immersive-hotspot-sheet.open {
@@ -306,20 +313,27 @@
       pointer-events: auto;
     }
     #immersive-hotspot-sheet .immersive-hotspot-sheet__inner {
-      width: min(100%, 420px);
+      width: min(100%, 640px);
+      max-height: min(85vh, 760px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       background: var(--glass-strong);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
-      padding: 18px 20px 20px;
+      padding: 22px 24px 24px;
       box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--gold-dim), 0 0 0 2px dashed var(--line-faint);
       position: relative;
       pointer-events: auto;
-      animation: sheetUp 0.28s var(--ease);
+      animation: hotspotModalIn 0.32s var(--ease);
     }
-    @keyframes sheetUp {
-      from { opacity: 0; transform: translateY(16px); }
+    @keyframes hotspotModalIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+      }
     }
     #immersive-hotspot-close {
       position: absolute;
@@ -341,16 +355,17 @@
     }
     #immersive-hotspot-title {
       margin: 0 36px 8px 0;
-      font-size: 1.05rem;
+      font-size: 1.12rem;
       font-weight: 700;
       color: var(--ivory);
       letter-spacing: -0.02em;
     }
     #immersive-hotspot-desc {
       margin: 0;
-      font-size: 0.86rem;
-      line-height: 1.5;
+      font-size: 0.9rem;
+      line-height: 1.58;
       color: var(--muted);
+      white-space: pre-line;
     }
     #immersive-hotspot-eyebrow {
       font-size: 0.6rem;
@@ -497,10 +512,10 @@
 
     .btn {
       font-family: var(--font);
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
       letter-spacing: 0.03em;
-      padding: 9px 16px;
+      padding: 10px 18px;
       border-radius: 999px;
       border: 1px solid transparent;
       background: var(--ivory);
@@ -529,12 +544,12 @@
     }
 
     .link-out {
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       font-weight: 700;
       letter-spacing: 0.04em;
       color: var(--forest-900);
       text-decoration: none;
-      padding: 9px 16px;
+      padding: 10px 18px;
       border-radius: 999px;
       background: var(--ivory);
       border: 1px solid rgba(246, 243, 236, 0.35);
@@ -597,18 +612,18 @@
     .panel--legend {
       left: 16px;
       bottom: 56px;
-      width: min(268px, calc(100vw - 32px));
+      width: min(300px, calc(100vw - 32px));
     }
 
     .panel--legend summary {
       list-style: none;
       cursor: pointer;
-      padding: 12px 14px 12px 16px;
+      padding: 14px 16px 14px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      font-size: 0.68rem;
+      font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -641,14 +656,14 @@
     }
 
     .panel--legend .panel__body {
-      padding: 12px 16px 14px;
+      padding: 14px 18px 16px;
     }
     .legend-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 0;
-      font-size: 0.78rem;
+      padding: 8px 0;
+      font-size: 0.82rem;
       border-bottom: 1px solid var(--line-faint);
     }
     .legend-row:last-child { border-bottom: none; }
@@ -665,26 +680,26 @@
     .panel--help {
       right: 16px;
       bottom: 56px;
-      width: min(280px, calc(100vw - 32px));
+      width: min(312px, calc(100vw - 32px));
     }
     .panel--help .panel__head {
-      padding: 12px 16px;
-      font-size: 0.68rem;
+      padding: 14px 18px;
+      font-size: 0.72rem;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--gold-bright);
       border-bottom: 1px solid var(--line);
     }
-    .panel--help .panel__body { padding: 12px 16px 14px; }
+    .panel--help .panel__body { padding: 14px 18px 16px; }
 
     .help-line {
       display: flex;
       align-items: baseline;
       gap: 8px;
       flex-wrap: wrap;
-      margin: 8px 0;
-      font-size: 0.76rem;
+      margin: 9px 0;
+      font-size: 0.8rem;
       color: var(--muted);
       line-height: 1.45;
     }
@@ -728,8 +743,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: 12px 28px;
-      padding: 12px 16px 14px;
+      gap: 14px 32px;
+      padding: 14px 18px 16px;
       background: linear-gradient(0deg, rgba(5, 13, 10, 0.92) 0%, rgba(5, 13, 10, 0.55) 55%, transparent 100%);
       pointer-events: none;
     }
@@ -778,8 +793,8 @@
     #modal-backdrop.open { display: flex; }
 
     #modal {
-      width: min(100%, 720px);
-      max-height: min(92vh, 880px);
+      width: min(100%, 760px);
+      max-height: min(92vh, 920px);
       background: var(--glass-strong);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -799,7 +814,7 @@
     }
 
     #modal header {
-      padding: 16px 20px;
+      padding: 18px 22px;
       border-bottom: 1px solid var(--line);
       display: flex;
       align-items: flex-start;
@@ -809,7 +824,7 @@
     }
     #modal .header-text { min-width: 0; }
     #modal .modal-eyebrow {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       font-weight: 700;
       letter-spacing: 0.16em;
       text-transform: uppercase;
@@ -818,7 +833,7 @@
     }
     #modal header h2 {
       margin: 0;
-      font-size: 1.12rem;
+      font-size: 1.2rem;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: var(--ivory);
@@ -827,8 +842,8 @@
 
     #modal-close {
       flex-shrink: 0;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       display: grid;
       place-items: center;
       border: none;
@@ -846,7 +861,7 @@
       outline: 2px solid var(--gold-bright);
       outline-offset: 2px;
     }
-    #modal-close svg { width: 20px; height: 20px; }
+    #modal-close svg { width: 22px; height: 22px; }
 
     #pano-container {
       width: 100%;
@@ -860,8 +875,8 @@
     }
 
     #modal .body {
-      padding: 16px 20px 20px;
-      font-size: 0.875rem;
+      padding: 18px 22px 22px;
+      font-size: 0.92rem;
       line-height: 1.55;
       color: var(--muted);
     }
@@ -869,8 +884,8 @@
       color: var(--ivory-muted);
     }
     #modal .modal-footer {
-      padding: 0 20px 16px;
-      font-size: 0.68rem;
+      padding: 0 22px 18px;
+      font-size: 0.72rem;
       color: var(--muted);
       opacity: 0.95;
       line-height: 1.5;
@@ -964,13 +979,13 @@
         display: none;
       }
       .brand-text h1 {
-        font-size: 0.62rem;
+        font-size: 0.68rem;
         letter-spacing: 0.07em;
         line-height: 1.25;
       }
       .brand-text .brand-production {
         margin-top: 3px;
-        font-size: 0.52rem;
+        font-size: 0.58rem;
         letter-spacing: 0.05em;
         line-height: 1.35;
       }
@@ -1009,14 +1024,14 @@
         top: 0;
         right: 0;
         bottom: 0;
-        width: min(100vw - 44px, 304px);
+        width: min(100vw - 40px, 332px);
         z-index: 30;
         background: var(--glass-strong);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-left: 1px solid var(--line);
         box-shadow: var(--shadow-lg);
-        padding: max(12px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+        padding: max(14px, env(safe-area-inset-top, 0px)) 18px max(18px, env(safe-area-inset-bottom, 0px));
         transform: translateX(100%);
         visibility: hidden;
         transition: transform 0.32s var(--ease), visibility 0.32s;
@@ -1037,15 +1052,15 @@
       }
       .mobile-nav__title {
         margin: 0;
-        font-size: 0.65rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--gold-bright);
       }
       .mobile-nav__close {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border: none;
         border-radius: var(--radius-sm);
         background: var(--teal-ghost);
@@ -1065,7 +1080,7 @@
         outline-offset: 2px;
       }
       .mobile-nav__section-label {
-        font-size: 0.55rem;
+        font-size: 0.62rem;
         font-weight: 700;
         letter-spacing: 0.16em;
         text-transform: uppercase;
@@ -1082,12 +1097,12 @@
         background: rgba(10, 24, 20, 0.65);
         border: 1px solid var(--line);
         border-radius: var(--radius-sm);
-        padding: 10px 8px;
+        padding: 12px 10px;
         text-align: center;
       }
       .mobile-nav__kpi-val {
         display: block;
-        font-size: 0.95rem;
+        font-size: 1.02rem;
         font-weight: 700;
         color: var(--gold-bright);
         line-height: 1.1;
@@ -1095,7 +1110,7 @@
       .mobile-nav__kpi-lbl {
         display: block;
         margin-top: 4px;
-        font-size: 0.52rem;
+        font-size: 0.58rem;
         font-weight: 600;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -1109,12 +1124,12 @@
       }
       .mobile-nav__tab {
         font-family: var(--font);
-        font-size: 0.62rem;
+        font-size: 0.68rem;
         font-weight: 700;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         text-align: left;
-        padding: 14px 16px;
+        padding: 15px 18px;
         border: 1px solid var(--line);
         border-radius: var(--radius-md);
         background: rgba(10, 24, 20, 0.5);
@@ -1154,11 +1169,11 @@
       }
 
       .pano3d360-picker {
-        bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+        bottom: max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 4.5rem));
       }
       .pano360-hint {
-        bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 64px));
-      }
+        bottom: max(5.5rem, calc(env(safe-area-inset-bottom, 0px) + 4rem));
+       }
       .immersive-watermark-layer {
         padding-bottom: max(130px, calc(72px + env(safe-area-inset-bottom, 0px)));
       }
@@ -1167,16 +1182,16 @@
     .pano3d360-picker {
       display: none;
       position: fixed;
-      bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 92px));
+      bottom: max(6.75rem, calc(env(safe-area-inset-bottom, 0px) + 5.75rem));
       left: 50%;
       transform: translateX(-50%);
       z-index: 5;
       align-items: center;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       max-width: calc(100vw - 24px);
-      padding: 6px 10px;
+      padding: 8px 14px;
       background: var(--glass);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -1192,7 +1207,7 @@
       display: inline-flex;
     }
     .pano3d360-picker__lbl {
-      font-size: 0.58rem;
+      font-size: 0.64rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -1202,9 +1217,9 @@
     }
     .pano3d360-picker__btn {
       font-family: var(--font);
-      font-size: 0.68rem;
+      font-size: 0.74rem;
       font-weight: 600;
-      padding: 7px 12px;
+      padding: 9px 15px;
       border: none;
       border-radius: 999px;
       background: transparent;
@@ -1229,23 +1244,23 @@
       .foot-strip .scale-card { display: none; }
       .pano3d360-picker {
         max-width: calc(100vw - 16px);
-        padding: 5px 8px;
-        gap: 4px;
+        padding: 7px 10px;
+        gap: 6px;
       }
       .pano3d360-picker__btn {
-        font-size: 0.6rem;
-        padding: 6px 8px;
+        font-size: 0.66rem;
+        padding: 8px 10px;
       }
       .pano3d360-picker__lbl {
-        font-size: 0.52rem;
+        font-size: 0.58rem;
         width: 100%;
         text-align: center;
         padding: 2px 0 0;
       }
       .pano360-hint {
-        bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 72px));
-        font-size: 0.65rem;
-        padding: 8px 14px;
+        bottom: max(6.25rem, calc(env(safe-area-inset-bottom, 0px) + 4.5rem));
+        font-size: 0.7rem;
+        padding: 10px 16px;
         max-width: calc(100vw - 20px);
         line-height: 1.35;
       }
@@ -1274,9 +1289,559 @@
         width: min(100vw - 36px, 100%);
       }
     }
+
+    /* —— UI layout v2: menu dưới kiểu industrial (skew + stripe), cùng palette brand —— */
+    .v2-chrome {
+      display: none;
+    }
+    html.ui-layout-v2 .v2-chrome {
+      display: block;
+    }
+    html.ui-layout-v2 {
+      --v2-dock-stack: calc(3.65rem + env(safe-area-inset-bottom, 0px));
+      /* Dock → picker → gap → hint; band phải ≥ chiều cao thực picker (wrap 2 dòng) */
+      --v2-pad-above-dock: 12px;
+      --v2-picker-band-h: 110px;
+      --v2-gap-picker-hint: 20px;
+      --v2-stack-above-picker: calc(
+        var(--v2-dock-stack) + var(--v2-pad-above-dock) + var(--v2-picker-band-h) +
+          var(--v2-gap-picker-hint)
+      );
+    }
+    html.ui-layout-v2 .app-bar,
+    html.ui-layout-v2 .mobile-nav-toggle,
+    html.ui-layout-v2 #mobile-nav-overlay,
+    html.ui-layout-v2 #mobile-nav-drawer {
+      display: none !important;
+    }
+
+    /* v2: không hiện dải concept / thang / nút chuyển v2 (đã có trong dock & URL) */
+    html.ui-layout-v2 .foot-strip {
+      display: none !important;
+    }
+    html.ui-layout-v2 .pano3d360-picker {
+      bottom: calc(var(--v2-dock-stack) + var(--v2-pad-above-dock));
+      z-index: 6;
+    }
+    /* Ảnh dự án (không 360): hint + picker đều trên — hint trên cùng, Fr/Top ngay dưới */
+    html.ui-layout-v2 body.view-pano-kcn-real {
+      --v2-stack-above-picker: calc(var(--v2-dock-stack) + var(--v2-pad-above-dock) + 18px);
+      /* Sát top: chỉ chừa safe-area + chút margin (VI/EN góc phải) */
+      --v2-top-banner-top: max(6px, calc(env(safe-area-inset-top, 0px) + 4px));
+      --v2-hint-slot-h: 88px;
+      --v2-under-hint-gap: 6px;
+    }
+    html.ui-layout-v2 body.view-pano-kcn-real .pano360-hint {
+      top: var(--v2-top-banner-top);
+      bottom: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 7;
+      max-width: min(720px, calc(100vw - 24px));
+    }
+    html.ui-layout-v2 body.view-pano-kcn-real #pano-kcn-real-picker {
+      top: calc(
+        var(--v2-top-banner-top) + var(--v2-hint-slot-h) + var(--v2-under-hint-gap)
+      );
+      bottom: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+    }
+    html.ui-layout-v2 body.view-pano3d360 .pano360-hint {
+      bottom: var(--v2-stack-above-picker);
+      top: auto;
+      transform: translateX(-50%);
+    }
+    html.ui-layout-v2 .pano360-hint {
+      z-index: 7;
+      max-width: min(720px, calc(100vw - 24px));
+    }
+    html.ui-layout-v2 .panel--legend {
+      bottom: var(--v2-stack-above-picker);
+    }
+    html.ui-layout-v2 .panel--help {
+      bottom: auto;
+      top: max(12px, env(safe-area-inset-top, 0px));
+      right: 12px;
+    }
+    html.ui-layout-v2 .immersive-watermark-layer {
+      padding-bottom: max(140px, calc(var(--v2-stack-above-picker) + 64px));
+    }
+    .v2-kpi {
+      position: fixed;
+      z-index: 8;
+      right: max(12px, env(safe-area-inset-right, 0px));
+      bottom: var(--v2-stack-above-picker);
+      width: min(328px, calc(100vw - 24px));
+      pointer-events: none;
+    }
+    .v2-kpi__inner {
+      pointer-events: auto;
+      background: rgba(10, 24, 20, 0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px 12px;
+      box-shadow: var(--shadow-md);
+    }
+    .v2-kpi__row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--line-faint);
+      font-size: 0.76rem;
+      color: var(--ivory-muted);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.65);
+    }
+    .v2-kpi__row:last-of-type {
+      border-bottom: none;
+    }
+    .v2-kpi__lbl {
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .v2-kpi__val {
+      font-weight: 700;
+      color: var(--gold-bright);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .v2-kpi__layout {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 0 0;
+      border: none;
+      border-top: 1px solid var(--line-faint);
+      background: transparent;
+      font-family: var(--font);
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      transition: color 0.2s var(--ease);
+    }
+    .v2-kpi__layout:hover,
+    .v2-kpi__layout:focus-visible {
+      color: var(--gold-bright);
+      outline: none;
+    }
+
+    .v2-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 7;
+      pointer-events: none;
+    }
+    .v2-dock > * {
+      pointer-events: auto;
+    }
+    .v2-dock__bar {
+      display: flex;
+      align-items: stretch;
+      flex-wrap: nowrap;
+      min-height: 3.25rem;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: linear-gradient(180deg, rgba(15, 36, 28, 0.96) 0%, rgba(10, 24, 20, 0.98) 100%);
+      border-top: 1px solid var(--line);
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+    }
+    .v2-dock__brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      max-width: min(42vw, 300px);
+      padding: 10px 22px 10px 16px;
+      margin-right: 4px;
+      background: rgba(5, 13, 10, 0.92);
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%);
+      border-right: 1px solid var(--line-faint);
+    }
+    .v2-dock__logo {
+      flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 6px;
+      background: linear-gradient(160deg, var(--forest-700) 0%, var(--forest-900) 100%);
+      border: 1px solid var(--line);
+      color: var(--gold-bright);
+      display: grid;
+      place-items: center;
+    }
+    .v2-dock__logo svg {
+      width: 1.375rem;
+      height: 1.375rem;
+    }
+    .v2-dock__titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .v2-dock__name {
+      font-size: 0.64rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ivory);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .v2-dock__sub {
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gold-bright);
+      opacity: 0.9;
+    }
+    .v2-dock__nav {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-end;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      padding: 6px 8px 6px 0;
+      gap: 0;
+    }
+    .v2-dock__nav::-webkit-scrollbar {
+      height: 4px;
+    }
+    .v2-dock__nav::-webkit-scrollbar-thumb {
+      background: var(--gold-dim);
+      border-radius: 2px;
+    }
+    .v2-nav__btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: -0.6875rem;
+      padding: 0 1.625rem 0 2rem;
+      min-height: 2.75rem;
+      border: none;
+      background: rgba(246, 243, 236, 0.08);
+      color: var(--ivory-muted);
+      font-family: var(--font);
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+      border-top: 1px solid var(--line-faint);
+      border-bottom: 1px solid var(--line-faint);
+      transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+    .v2-dock__nav .v2-nav__btn:first-child {
+      margin-left: 0;
+      clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+      padding-left: 1.125rem;
+    }
+    .v2-nav__btn:hover {
+      color: var(--ivory);
+      background: rgba(246, 243, 236, 0.12);
+    }
+    .v2-nav__btn:focus-visible {
+      outline: 2px solid var(--gold-bright);
+      outline-offset: -2px;
+      z-index: 1;
+    }
+    .v2-nav__btn--active {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      color: var(--forest-900);
+      border-color: transparent;
+      box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.5);
+    }
+    .v2-nav__btn--active:hover {
+      color: var(--forest-900);
+    }
+    a.v2-nav__btn {
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    .v2-dock__reset {
+      flex-shrink: 0;
+      align-self: center;
+      margin: 0 10px 0 6px;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(246, 243, 236, 0.1);
+      color: var(--gold-bright);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), color 0.2s var(--ease);
+    }
+    .v2-dock__reset:hover {
+      background: var(--teal-ghost);
+      color: var(--ivory);
+    }
+    .v2-dock__reset:focus-visible {
+      outline: 2px solid var(--gold-bright);
+      outline-offset: 2px;
+    }
+
+    .v2-dock__layout-mob {
+      display: none;
+      flex-shrink: 0;
+      align-self: center;
+      margin: 0 4px 0 0;
+      padding: 0 12px;
+      min-height: 2.35rem;
+      border-radius: 8px;
+      border: 1px solid var(--line-faint);
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+    }
+    .v2-dock__layout-mob:hover,
+    .v2-dock__layout-mob:focus-visible {
+      color: var(--gold-bright);
+      border-color: var(--gold-dim);
+      background: var(--teal-ghost);
+      outline: none;
+    }
+
+    .v2-dock__stripe {
+      display: flex;
+      height: 5px;
+      width: 100%;
+    }
+    .v2-dock__stripe-solid {
+      flex: 0 0 42%;
+      background: var(--ivory);
+      opacity: 0.92;
+    }
+    .v2-dock__stripe-hazard {
+      flex: 1;
+      background: repeating-linear-gradient(
+        -52deg,
+        #0a0a0a 0 9px,
+        var(--gold) 9px 18px
+      );
+    }
+
+    .foot-strip__layout {
+      display: none;
+      pointer-events: auto;
+      margin: 4px 0 0;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(10, 24, 20, 0.75);
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+    }
+    .foot-strip__layout:hover,
+    .foot-strip__layout:focus-visible {
+      color: var(--gold-bright);
+      border-color: var(--gold-dim);
+      background: rgba(15, 36, 28, 0.85);
+      outline: none;
+    }
+    html:not(.ui-layout-v2) .foot-strip__layout {
+      display: inline-block;
+    }
+    html.ui-layout-v2 .foot-strip__layout {
+      display: none;
+    }
+
+    .lang-switch {
+      position: fixed;
+      z-index: 12;
+      top: max(10px, env(safe-area-inset-top, 0px));
+      right: max(12px, env(safe-area-inset-right, 0px));
+      display: inline-flex;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--glass-strong);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
+      pointer-events: auto;
+    }
+    .lang-switch__btn {
+      margin: 0;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), color 0.2s var(--ease);
+    }
+    .lang-switch__btn:hover {
+      color: var(--ivory);
+    }
+    .lang-switch__btn--active {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+      color: var(--forest-900);
+    }
+    .lang-switch__btn--active:hover {
+      color: var(--forest-900);
+    }
+    .lang-switch__btn:focus-visible {
+      outline: 2px solid var(--gold-bright);
+      outline-offset: -2px;
+    }
+
+    /* Nhãn hotspot (CSS2D) — chỉ tiêu đề, neo phía trên dấu chấm */
+    #immersive-pano-root .immersive-hotspot-label {
+      max-width: min(240px, 40vw);
+      padding: 8px 12px;
+      background: rgba(10, 24, 20, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md), inset 0 0 0 1px var(--gold-dim);
+      text-align: left;
+      pointer-events: none;
+      line-height: 1.38;
+    }
+    #immersive-pano-root .immersive-hotspot-label__title {
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-bright);
+    }
+
+    @media (max-width: 900px) {
+      html.ui-layout-v2 {
+        --v2-picker-band-h: 122px;
+      }
+      html.ui-layout-v2 body.view-pano-kcn-real {
+        --v2-hint-slot-h: 102px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      html.ui-layout-v2 {
+        --v2-dock-stack: calc(3.35rem + env(safe-area-inset-bottom, 0px));
+        --v2-picker-band-h: 132px;
+        --v2-gap-picker-hint: 16px;
+      }
+      html.ui-layout-v2 .v2-kpi {
+        display: none;
+      }
+      html.ui-layout-v2 .v2-dock__layout-mob {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      html.ui-layout-v2 .pano3d360-picker {
+        bottom: calc(var(--v2-dock-stack) + var(--v2-pad-above-dock));
+      }
+      html.ui-layout-v2 body.view-pano-kcn-real {
+        --v2-top-banner-top: max(6px, calc(env(safe-area-inset-top, 0px) + 4px));
+        --v2-hint-slot-h: 108px;
+        --v2-under-hint-gap: 6px;
+      }
+      html.ui-layout-v2 body.view-pano3d360 .pano360-hint {
+        bottom: var(--v2-stack-above-picker);
+        top: auto;
+        font-size: 0.66rem;
+        padding: 10px 14px;
+        max-width: calc(100vw - 20px);
+      }
+      html.ui-layout-v2 body.view-pano-kcn-real .pano360-hint {
+        font-size: 0.66rem;
+        padding: 10px 14px;
+        max-width: calc(100vw - 20px);
+      }
+      .v2-dock__brand {
+        max-width: 46vw;
+        padding-left: 10px;
+        padding-right: 16px;
+      }
+      .v2-dock__name {
+        font-size: 0.56rem;
+        letter-spacing: 0.08em;
+      }
+      .v2-nav__btn {
+        font-size: 0.54rem;
+        padding: 0 1.125rem 0 1.5rem;
+        min-height: 2.45rem;
+      }
+      .v2-dock__reset {
+        width: 2.25rem;
+        height: 2.25rem;
+        margin-right: 6px;
+      }
+    }
   </style>
+  <script>
+    (function () {
+      try {
+        var p = new URLSearchParams(location.search);
+        var v2on =
+          p.get("v2") === "1" ||
+          p.get("v2") === "true" ||
+          p.get("layout") === "v2" ||
+          p.get("ui") === "v2";
+        var v1on =
+          p.get("v1") === "1" ||
+          p.get("v1") === "true" ||
+          p.get("v2") === "0" ||
+          p.get("v2") === "false" ||
+          p.get("layout") === "v1" ||
+          p.get("ui") === "v1";
+        /* Mặc định v1: chỉ bật v2 khi URL yêu cầu (không đọc localStorage layout) */
+        var useV2 = v2on && !v1on;
+        document.documentElement.classList.toggle("ui-layout-v2", useV2);
+
+        var lg = p.get("lang");
+        if (lg === "en" || lg === "vi") localStorage.setItem("kcnLang", lg);
+        var lang = localStorage.getItem("kcnLang") || "vi";
+        if (lang !== "en" && lang !== "vi") lang = "vi";
+        document.documentElement.setAttribute("data-lang", lang);
+        document.documentElement.lang = lang === "en" ? "en" : "vi";
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
+  <div class="lang-switch" id="lang-switch-root" role="group" aria-label="Chọn ngôn ngữ">
+    <button type="button" class="lang-switch__btn lang-switch__btn--active" data-set-lang="vi" aria-pressed="true">
+      VI
+    </button>
+    <button type="button" class="lang-switch__btn" data-set-lang="en" aria-pressed="false">
+      EN
+    </button>
+  </div>
   <div id="canvas-wrap" aria-hidden="false"></div>
   <div
     id="immersive-pano-root"
@@ -1289,11 +1854,11 @@
     id="immersive-loading"
     class="immersive-loading"
     aria-live="polite"
-    aria-busy="false"
+    aria-busy="false"![1775039353600](image/index/1775039353600.png)
     aria-hidden="true"
   >
     <div class="immersive-loading__spinner" aria-hidden="true"></div>
-    <span class="immersive-loading__text">Đang tải góc nhìn…</span>
+    <span class="immersive-loading__text" data-i18n="loadingText">Đang tải góc nhìn…</span>
   </div>
   <div class="immersive-watermark-layer">
     <div class="immersive-watermark">
@@ -1324,7 +1889,7 @@
           </text>
           <text
             x="232"
-            y="62"
+            y="62"![1775040331112](image/index/1775040331112.png)
             font-family="'Plus Jakarta Sans', system-ui, sans-serif"
             font-size="24"
             font-weight="600"
@@ -1340,6 +1905,105 @@
   <p class="pano360-hint" aria-live="polite">
     Ảnh phối thực tế dự án — <strong>chấm vàng</strong> là hotspot (chạm) · <kbd>R</kbd> / <kbd>Esc</kbd>
   </p>
+
+  <div class="v2-chrome" id="v2-chrome">
+    <aside class="v2-kpi" id="v2-kpi-aside" aria-label="Chỉ số quy mô dự án">
+      <div class="v2-kpi__inner">
+        <div class="v2-kpi__row">
+          <span class="v2-kpi__lbl" data-i18n="v2KpiArea">Tổng diện tích (khái niệm)</span>
+          <span class="v2-kpi__val">~500 ha</span>
+        </div>
+        <div class="v2-kpi__row">
+          <span class="v2-kpi__lbl" data-i18n="v2KpiKcn">Diện tích KCN</span>
+          <span class="v2-kpi__val">429,5 ha</span>
+        </div>
+        <div class="v2-kpi__row">
+          <span class="v2-kpi__lbl" data-i18n="v2KpiInvest">Vốn dự kiến</span>
+          <span class="v2-kpi__val">4.365 tỷ</span>
+        </div>
+        <div class="v2-kpi__row">
+          <span class="v2-kpi__lbl" data-i18n="v2KpiPoi">Điểm POI (demo)</span>
+          <span class="v2-kpi__val">4</span>
+        </div>
+        <button type="button" class="v2-kpi__layout" data-set-ui-layout="v1" data-i18n="v2LayoutV1">
+          Giao diện cổ điển (v1)
+        </button>
+      </div>
+    </aside>
+
+    <nav class="v2-dock" id="v2-dock-nav" aria-label="Menu dự án — bản v2">
+      <div class="v2-dock__bar">
+        <div class="v2-dock__brand">
+          <div class="v2-dock__logo" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="0.7" opacity="0.22"/>
+              <path d="M16 5.5l2.2 6.7h7.1l-5.7 4.1 2.2 6.7L16 18.9l-5.8 4.1 2.2-6.7-5.7-4.1h7.1L16 5.5z" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round" fill="currentColor" fill-opacity="0.12"/>
+              <path d="M16 8.2l1.5 4.5h4.8l-3.9 2.8 1.5 4.5-3.9-2.8-3.9 2.8 1.5-4.5-3.9-2.8h4.8L16 8.2z" stroke="currentColor" stroke-width="0.9" stroke-linejoin="round" fill="none"/>
+            </svg>
+          </div>
+          <div class="v2-dock__titles">
+            <span class="v2-dock__name" data-i18n="h1">Khu công nghiệp Thịnh Minh</span>
+            <span class="v2-dock__sub" data-i18n="v2BrandSub">Dạ Hợp · vr360.one</span>
+          </div>
+        </div>
+        <div class="v2-dock__nav">
+          <button
+            type="button"
+            class="v2-nav__btn"
+            data-set-view="pano3d360"
+            aria-pressed="false"
+            data-i18n="v2NavTour"
+          >
+            Tham quan
+          </button>
+          <button
+            type="button"
+            class="v2-nav__btn v2-nav__btn--active"
+            data-set-view="panoKcnReal"
+            aria-pressed="true"
+            data-i18n="v2NavOverview"
+          >
+            Tổng quan
+          </button>
+          <button type="button" class="v2-nav__btn" id="v2-btn-floorplan" aria-pressed="false" data-i18n="v2NavFloorplan">
+            Mặt bằng
+          </button>
+          <a
+            class="v2-nav__btn v2-nav__link"
+            href="https://dahop.vn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="v2NavDocs"
+          >
+            Tài liệu
+          </a>
+        </div>
+        <button
+          type="button"
+          class="v2-dock__layout-mob"
+          data-set-ui-layout="v1"
+          data-i18n-title="v2LayoutMobTitle"
+          title="Giao diện cổ điển"
+        >
+          v1
+        </button>
+        <button
+          type="button"
+          class="v2-dock__reset js-btn-reset-view"
+          data-i18n-title="v2ResetTitle"
+          data-i18n-aria="v2ResetAria"
+          title="Khôi phục góc nhìn (phím R)"
+          aria-label="Khôi phục góc nhìn"
+        >
+          ↻
+        </button>
+      </div>
+      <div class="v2-dock__stripe" aria-hidden="true">
+        <span class="v2-dock__stripe-solid"></span>
+        <span class="v2-dock__stripe-hazard"></span>
+      </div>
+    </nav>
+  </div>
 
   <div id="immersive-hotspot-sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="immersive-hotspot-title">
     <div class="immersive-hotspot-sheet__inner">
@@ -1360,41 +2024,41 @@
         </svg>
       </div>
       <div class="brand-text">
-        <span class="eyebrow">Trình bày ý tưởng · Dạ Hợp</span>
-        <h1>Khu công nghiệp Thịnh Minh</h1>
-        <p class="tagline-script">Điểm đến công nghiệp xanh</p>
-        <p class="tagline">
+        <span class="eyebrow" data-i18n="brandEyebrow">Trình bày ý tưởng · Dạ Hợp</span>
+        <h1 data-i18n="h1">Khu công nghiệp Thịnh Minh</h1>
+        <p class="tagline-script" data-i18n="taglineScript">Điểm đến công nghiệp xanh</p>
+        <p class="tagline" data-i18n-html="taglineHtml">
           Mô phỏng tổ hợp <strong>~500 ha</strong> (KCN 429,5 ha và vùng cụm, dịch vụ). Góc nhìn fly-over;
           dữ liệu minh họa — <strong>không thay thế</strong> hồ sơ quy hoạch pháp lý.
         </p>
         <p class="brand-production">
-          Sản xuất bởi
+          <span data-i18n="brandProdPrefix">Sản xuất bởi</span>
           <a href="https://vr360.one/" target="_blank" rel="noopener noreferrer">vr360.one</a>
         </p>
       </div>
     </div>
     <div class="desktop-nav">
       <div class="app-bar__aside">
-        <div class="kpi-row" role="group" aria-label="Chỉ số quy mô">
+        <div class="kpi-row" id="desktop-kpi-row" role="group" aria-label="Chỉ số quy mô">
           <div class="kpi">
             <span class="kpi__val">~500</span>
-            <span class="kpi__lbl">ha tổng thể</span>
+            <span class="kpi__lbl" data-i18n="kpiHaTotal">ha tổng thể</span>
           </div>
           <div class="kpi">
             <span class="kpi__val">429,5</span>
-            <span class="kpi__lbl">ha KCN</span>
+            <span class="kpi__lbl" data-i18n="kpiHaKcn">ha KCN</span>
           </div>
           <div class="kpi">
             <span class="kpi__val">4.365</span>
-            <span class="kpi__lbl">tỷ VNĐ dự kiến</span>
+            <span class="kpi__lbl" data-i18n="kpiInvest">tỷ VNĐ dự kiến</span>
           </div>
           <div class="kpi">
             <span class="kpi__val">4</span>
-            <span class="kpi__lbl">điểm POI</span>
+            <span class="kpi__lbl" data-i18n="kpiPoi">điểm POI</span>
           </div>
         </div>
         <div class="toolbar">
-          <div class="view-toggle" role="tablist" aria-label="Ảnh 3D Dạ Hợp và minh họa 360 độ vr360.one">
+          <div class="view-toggle" role="tablist" aria-label="Ảnh 3D Dạ Hợp và minh họa 360 độ vr360.one" id="view-toggle-tabs">
             <button
               type="button"
               id="tab-view-pano-kcn-real"
@@ -1403,6 +2067,7 @@
               aria-selected="true"
               aria-controls="immersive-pano-root"
               data-set-view="panoKcnReal"
+              data-i18n="tabKcnReal"
             >
               Ảnh 3D · Dạ Hợp
             </button>
@@ -1414,11 +2079,19 @@
               aria-selected="false"
               aria-controls="immersive-pano-root"
               data-set-view="pano3d360"
+              data-i18n="tabPano360"
             >
               360° · vr360.one
             </button>
           </div>
-          <button type="button" class="btn btn--primary js-btn-reset-view" id="btn-reset-view" title="Phím tắt R">
+          <button
+            type="button"
+            class="btn btn--primary js-btn-reset-view"
+            id="btn-reset-view"
+            data-i18n-title="btnResetTitle"
+            title="Phím tắt R"
+            data-i18n="btnReset"
+          >
             Khôi phục góc nhìn
           </button>
           <a class="link-out" href="https://dahop.vn/" target="_blank" rel="noopener noreferrer">dahop.vn →</a>
@@ -1453,12 +2126,12 @@
     aria-hidden="true"
   >
     <div class="mobile-nav__head">
-      <h2 class="mobile-nav__title" id="mobile-nav-title">Menu</h2>
+      <h2 class="mobile-nav__title" id="mobile-nav-title" data-i18n="mobileNavTitle">Menu</h2>
       <button type="button" class="mobile-nav__close" id="mobile-nav-close" aria-label="Đóng menu">
         ×
       </button>
     </div>
-    <p class="mobile-nav__section-label">Quy mô</p>
+    <p class="mobile-nav__section-label" data-i18n="mobileSectionScale">Quy mô</p>
     <div class="mobile-nav__kpi-grid" aria-label="Chỉ số quy mô">
       <div class="mobile-nav__kpi">
         <span class="mobile-nav__kpi-val">~500</span>
@@ -1477,22 +2150,35 @@
         <span class="mobile-nav__kpi-lbl">điểm POI</span>
       </div>
     </div>
-    <p class="mobile-nav__section-label">Chế độ xem</p>
+    <p class="mobile-nav__section-label" data-i18n="mobileSectionView">Chế độ xem</p>
     <div class="mobile-nav__tabs" role="group" aria-label="Chọn chế độ xem">
       <button
         type="button"
         class="mobile-nav__tab mobile-nav__tab--active"
         data-set-view="panoKcnReal"
         aria-pressed="true"
+        data-i18n="mobileTabKcn"
       >
         Ảnh 3D · Dạ Hợp
       </button>
-      <button type="button" class="mobile-nav__tab" data-set-view="pano3d360" aria-pressed="false">
+      <button
+        type="button"
+        class="mobile-nav__tab"
+        data-set-view="pano3d360"
+        aria-pressed="false"
+        data-i18n="mobileTab360"
+      >
         360° · vr360.one
       </button>
     </div>
     <div class="mobile-nav__actions">
-      <button type="button" class="btn btn--primary js-btn-reset-view" title="Phím tắt R">
+      <button
+        type="button"
+        class="btn btn--primary js-btn-reset-view"
+        data-i18n-title="btnResetTitle"
+        title="Phím tắt R"
+        data-i18n="btnReset"
+      >
         Khôi phục góc nhìn
       </button>
       <a class="link-out" href="https://dahop.vn/" target="_blank" rel="noopener noreferrer">dahop.vn →</a>
@@ -1505,7 +2191,7 @@
     role="toolbar"
     aria-label="Chọn góc phối cảnh thực tế KCN Thịnh Minh"
   >
-    <span class="pano3d360-picker__lbl" aria-hidden="true">Dự án</span>
+    <span class="pano3d360-picker__lbl" aria-hidden="true" data-i18n="pickerLblProject">Dự án</span>
     <button type="button" class="pano3d360-picker__btn pano3d360-picker__btn--active" data-pano-idx="0" aria-pressed="true">Fr 00</button>
     <button type="button" class="pano3d360-picker__btn" data-pano-idx="1" aria-pressed="false">Fr 01</button>
     <button type="button" class="pano3d360-picker__btn" data-pano-idx="2" aria-pressed="false">Fr 04</button>
@@ -1519,7 +2205,7 @@
     role="toolbar"
     aria-label="Chọn ảnh 360 thực địa V1"
   >
-    <span class="pano3d360-picker__lbl" aria-hidden="true">V1</span>
+    <span class="pano3d360-picker__lbl" aria-hidden="true" data-i18n="pickerLblV1">V1</span>
     <button type="button" class="pano3d360-picker__btn pano3d360-picker__btn--active" data-pano-idx="0" aria-pressed="true">TT 01</button>
     <button type="button" class="pano3d360-picker__btn" data-pano-idx="1" aria-pressed="false">TT 02</button>
     <button type="button" class="pano3d360-picker__btn" data-pano-idx="2" aria-pressed="false">TT 03</button>
@@ -1527,7 +2213,7 @@
   </div>
 
   <details class="panel panel--legend" open>
-    <summary>Chú thích phân vùng</summary>
+    <summary data-i18n="legendSummary">Chú thích phân vùng</summary>
     <div class="panel__body">
       <div class="legend-row">
         <i class="swatch" style="background:#3d5658" aria-hidden="true"></i>
@@ -1557,43 +2243,43 @@
     </div>
   </details>
 
-  <aside class="panel panel--help" aria-label="Hướng dẫn điều khiển">
-    <div class="panel__head">Điều khiển</div>
+  <aside class="panel panel--help" id="panel-help-aside" data-i18n-aria="panelHelpAsideAria" aria-label="Hướng dẫn điều khiển">
+    <div class="panel__head" data-i18n="panelHelpHead">Điều khiển</div>
     <div class="panel__body">
       <div class="help-line">
-        <strong>Xoay</strong>
-        <span>Kéo chuột trái</span>
+        <strong data-i18n="helpRotate">Xoay</strong>
+        <span data-i18n="helpRotateVal">Kéo chuột trái</span>
       </div>
       <div class="help-line">
-        <strong>Pan</strong>
-        <span>Chuột phải hoặc</span>
+        <strong data-i18n="helpPan">Pan</strong>
+        <span data-i18n="helpPanVal">Chuột phải hoặc</span>
         <kbd>Ctrl</kbd>
-        <span>+ kéo</span>
+        <span data-i18n="helpPanVal2">+ kéo</span>
       </div>
       <div class="help-line">
-        <strong>Thu phóng</strong>
-        <span>Con lăn</span>
+        <strong data-i18n="helpZoom">Thu phóng</strong>
+        <span data-i18n="helpZoomVal">Con lăn</span>
       </div>
       <div class="help-line">
-        <strong>Reset</strong>
+        <strong data-i18n="helpReset">Reset</strong>
         <kbd>R</kbd>
-        <span>hoặc nút trên</span>
+        <span data-i18n="helpResetVal">hoặc nút trên</span>
       </div>
-      <p class="poi-hint">
-        <strong>Phối cảnh dự án:</strong> ảnh render phối cảnh (không phải 360°) — chọn góc Fr / Top, chạm hotspot vàng.
-        <strong>Minh họa 360°:</strong> ví dụ hướng triển khai tour 360° thực địa (TT 01–04) — hotspot vàng, kéo để xoay.
-      </p>
+      <p class="poi-hint" data-i18n-html="poiHintHtml"></p>
     </div>
   </aside>
 
   <div class="foot-strip">
     <div class="scale-card" aria-hidden="true">
       <div class="track"></div>
-      <span>Thang ~1 km</span>
+      <span data-i18n="scaleCard">Thang ~1 km</span>
     </div>
-    <p class="disclaimer">
+    <p class="disclaimer" data-i18n="disclaimer">
       Concept cho mục đích trình bày ý tưởng. Tọa độ, ranh giới và hình khối không phản ánh bản vẽ chính thức.
     </p>
+    <button type="button" class="foot-strip__layout" data-set-ui-layout="v2" data-i18n="footLayoutV2">
+      Giao diện menu dưới (v2)
+    </button>
   </div>
 
   <div id="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title">
